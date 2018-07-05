@@ -7,6 +7,7 @@ object Token extends Enumeration {
   TK_DIVIDE,
   TK_MOD,
   TK_NEQ,
+  TK_EQ,
   TK_LT,
   TK_LEQ,
   TK_GT,
