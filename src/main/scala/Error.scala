@@ -38,6 +38,62 @@ object Error {
     else
       return tkTable.get(v).get
   }
+
+  def linkError(fmt:String,fileName:String) =
+    handleException(WorkStage.STAGE_LINK,ErrorLevel.LEVEL_ERROR,fmt,fileName)
+
+  def getToken(ch:Char,fileName:String) = {
+    preprocess()
+    ch match {
+      case x if (x >= 'a' && x <= 'z') || (x >= 'A' && x <= 'Z') || x == '_' =>
+        parseIdentifier()
+      case x if x >= '0' && x <= '9' => {
+        parseNum()
+        token = Token.TK_CINT
+      }
+      case '-' =>
+        getCh()
+        if(ch == '>'){
+          token = Token.TK_POINTSTO
+          getCh()
+        }else
+          token = Token.TK_MINUS
+      case '/' =>
+        token = Token.TK_DIVIDE
+        getCh()
+      case '%' =>
+        token = Token.MOD
+        getCh()
+      case '=' =>
+        getCh()
+        if(ch == '='){
+          token = Token.TK_EQ
+          getCh()
+        }else
+          token = Token.TK_ASSIGN
+      case '!' =>
+        getCh()
+        if(ch == '!'){
+          token = Token.TK_NEQ
+          getCh()
+        }else
+          error("unsupported !",fileName)
+      case '<' =>
+        getCh()
+        if(ch == '='){
+          token = Token.TK_LEQ
+          getCh()
+        }else
+          token = Token.TK_LT
+      case '>' =>
+        getCh()
+        if(ch == '='){
+          token = Token.TK_GEQ
+          getCh()
+        }else
+          token = Token.TK_GT
+    }
+  }
 }
 
 
