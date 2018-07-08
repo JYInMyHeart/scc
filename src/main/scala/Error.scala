@@ -2,98 +2,47 @@ import ErrorLevel.ErrorLevel
 import WorkStage.WorkStage
 
 object Error {
-  def handleException(stage: WorkStage, level: ErrorLevel, fmt: String, fileName: String) = {
+  def handleException(stage: WorkStage, level: ErrorLevel, fmt: String, fileName: String,lexer:Lexer) = {
     if (stage == WorkStage.STAGE_COMPILE) {
       if (level == ErrorLevel.LEVEL_WARNING)
-        println(s"$fileName (line ${lineNum}) compiler warning:${buf}")
+        println(s"$fileName (line ${lexer.lineNum}) compiler warning:${fmt}")
       else {
-        println(s"$fileName (line ${lineNum}) compiler error:${buf}")
+        println(s"$fileName (line ${lexer.lineNum}) compiler error:${fmt}")
         System.exit(-1)
       }
     } else {
-      println(s"link error ${buf}")
+      println(s"link error ${fmt}")
       System.exit(-1)
     }
   }
 
-  def warning(fmt: String, fileName: String) =
-    handleException(WorkStage.STAGE_COMPILE, ErrorLevel.LEVEL_WARNING, fmt, fileName)
+  def warning(fmt: String, fileName: String,lexer: Lexer) =
+    handleException(WorkStage.STAGE_COMPILE, ErrorLevel.LEVEL_WARNING, fmt, fileName,lexer)
 
-  def error(fmt: String, fileName: String) =
-    handleException(WorkStage.STAGE_COMPILE, ErrorLevel.LEVEL_ERROR, fmt, fileName)
+  def error(fmt: String, fileName: String,lexer: Lexer) =
+    handleException(WorkStage.STAGE_COMPILE, ErrorLevel.LEVEL_ERROR, fmt, fileName,lexer)
 
-  def expect(msg:String,fileName:String) = error(s"miss $msg",fileName)
+  def expect(msg:String,fileName:String,lexer: Lexer) = error(s"miss $msg",fileName,lexer)
 
-  def skip(c:Int,fileName:String) = {
-    if(token != c)
-      error(s"miss $getTkstr(c)",fileName)
-    getToken()
+  def skip(c:Token.Value,fileName:String,lexer: Lexer) = {
+    if(lexer.token != c)
+      error(s"miss ${getTkstr(c,Lexer.keyWords,fileName)}",fileName,lexer)
+    lexer.getToken()
   }
 
-  def getTkstr(v:Int,tkTable:Map[Int,String],sourceStr:String):String = {
-    if(v > tkTable.size)
+  def getTkstr(v:Token.Value,tkTable:Map[Token.Value,String],sourceStr:String):String = {
+    if(v.id > tkTable.size)
       return null
-    else if(v >= Token.TK_CINT.id && v <= Token.TK_CSTR.id)
+    else if(v >= Token.TK_CINT && v <= Token.TK_CSTR)
       return sourceStr
     else
       return tkTable.get(v).get
   }
 
-  def linkError(fmt:String,fileName:String) =
-    handleException(WorkStage.STAGE_LINK,ErrorLevel.LEVEL_ERROR,fmt,fileName)
+  def linkError(fmt:String,fileName:String,lexer: Lexer) =
+    handleException(WorkStage.STAGE_LINK,ErrorLevel.LEVEL_ERROR,fmt,fileName,lexer)
 
-  def getToken(ch:Char,fileName:String) = {
-    preprocess()
-    ch match {
-      case x if (x >= 'a' && x <= 'z') || (x >= 'A' && x <= 'Z') || x == '_' =>
-        parseIdentifier()
-      case x if x >= '0' && x <= '9' => {
-        parseNum()
-        token = Token.TK_CINT
-      }
-      case '-' =>
-        getCh()
-        if(ch == '>'){
-          token = Token.TK_POINTSTO
-          getCh()
-        }else
-          token = Token.TK_MINUS
-      case '/' =>
-        token = Token.TK_DIVIDE
-        getCh()
-      case '%' =>
-        token = Token.MOD
-        getCh()
-      case '=' =>
-        getCh()
-        if(ch == '='){
-          token = Token.TK_EQ
-          getCh()
-        }else
-          token = Token.TK_ASSIGN
-      case '!' =>
-        getCh()
-        if(ch == '!'){
-          token = Token.TK_NEQ
-          getCh()
-        }else
-          error("unsupported !",fileName)
-      case '<' =>
-        getCh()
-        if(ch == '='){
-          token = Token.TK_LEQ
-          getCh()
-        }else
-          token = Token.TK_LT
-      case '>' =>
-        getCh()
-        if(ch == '='){
-          token = Token.TK_GEQ
-          getCh()
-        }else
-          token = Token.TK_GT
-    }
-  }
+
 }
 
 
