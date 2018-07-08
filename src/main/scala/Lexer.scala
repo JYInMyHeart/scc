@@ -5,36 +5,37 @@ import Lexer.EOF
 import Token.Token
 
 import scala.io.Source
+
 class Lexer(var token: Token,
-            var lineNum:Int,
-            var ch:Char,
-            val fin:String,
-            var count:Int,
-            val fileName:String){
+            var lineNum: Int,
+            var ch: Char,
+            val fin: String,
+            var count: Int,
+            val fileName: String) {
   def parseIdentifier() = {
-    import Lexer.{isDigit,isNodigit,tkWords}
+    import Lexer.{isDigit, isNodigit, tkWords}
     var temp = ch.toString
     getCh()
-    while(isDigit(ch) || isNodigit(ch)){
+    while (isDigit(ch) || isNodigit(ch)) {
       temp += ch
       getCh()
     }
-    tkWords += count->temp
+    tkWords += count -> temp
   }
 
   def parseNum() = {
     getCh()
   }
 
-  def parseString(sep: Char):String = {
-    var c:Char = ' '
-    var str:String = sep.toString
+  def parseString(sep: Char): String = {
+    var c: Char = ' '
+    var str: String = sep.toString
     getCh()
     var flag = true
-    while(true){
-      if(ch == sep)
+    while (true) {
+      if (ch == sep)
         flag = false
-      else if(ch == '\\') {
+      else if (ch == '\\') {
         str += ch
         getCh()
         ch match {
@@ -50,15 +51,15 @@ class Lexer(var token: Token,
           case _ => {
             c = ch
             if (c >= '!' && c <= '~')
-              warning("illegal escape characters", fileName,this)
+              warning("illegal escape characters", fileName, this)
             else
-              warning(s"illegal escape characters$c", fileName,this)
+              warning(s"illegal escape characters$c", fileName, this)
           }
         }
         str += ch
         getCh()
         str
-      }else{
+      } else {
         str += ch
         getCh()
         str
@@ -80,10 +81,10 @@ class Lexer(var token: Token,
       }
       case '-' =>
         getCh()
-        if(ch == '>'){
+        if (ch == '>') {
           token = Token.TK_POINTSTO
           getCh()
-        }else
+        } else
           token = Token.TK_MINUS
       case '/' =>
         token = Token.TK_DIVIDE
@@ -93,42 +94,42 @@ class Lexer(var token: Token,
         getCh()
       case '=' =>
         getCh()
-        if(ch == '='){
+        if (ch == '=') {
           token = Token.TK_EQ
           getCh()
-        }else
+        } else
           token = Token.TK_ASSIGN
       case '!' =>
         getCh()
-        if(ch == '!'){
+        if (ch == '!') {
           token = Token.TK_NEQ
           getCh()
-        }else
-          error("unsupported !",fileName,this)
+        } else
+          error("unsupported !", fileName, this)
       case '<' =>
         getCh()
-        if(ch == '='){
+        if (ch == '=') {
           token = Token.TK_LEQ
           getCh()
-        }else
+        } else
           token = Token.TK_LT
       case '>' =>
         getCh()
-        if(ch == '='){
+        if (ch == '=') {
           token = Token.TK_GEQ
           getCh()
-        }else
+        } else
           token = Token.TK_GT
       case '.' =>
         getCh()
-        if(ch == '.'){
+        if (ch == '.') {
           getCh()
-          if(ch != '.')
-            error("error",fileName,this)
+          if (ch != '.')
+            error("error", fileName, this)
           else
             token = Token.TK_ELLIPSIS
           getCh()
-        }else
+        } else
           token = Token.TK_DOT
       case '&' =>
         token = Token.TK_AND
@@ -163,17 +164,18 @@ class Lexer(var token: Token,
       case '\'' =>
         parseString(ch)
         token = Token.TK_CCHAR
-//        tkValue = tkstr.data
+      //        tkValue = tkstr.data
       case '\"' =>
         parseString(ch)
         token = Token.TK_CSTR
       case EOF =>
         token = Token.TK_EOF
       case _ =>
-        error("unknown characters",fileName,this)
+        error("unknown characters", fileName, this)
         getCh()
     }
   }
+
   def getCh() = {
     ch = fin(count)
     count += 1
@@ -186,23 +188,22 @@ class Lexer(var token: Token,
 
   def preprocess() = {
     var flag = true
-    while(flag){
-      if(ch == ' ' || ch == '\t' || ch == '\r')
+    while (flag) {
+      if (ch == ' ' || ch == '\t' || ch == '\r')
         skipWhiteSpace()
-      else if(ch == '/'){
+      else if (ch == '/') {
         getCh()
-        if(ch == '*'){
+        if (ch == '*') {
           parseComment()
-        }else{
-          ungetC(ch,fin)
+        } else {
+          ungetC(ch, fin)
           ch = '/'
           flag = false
         }
-      }else
+      } else
         flag = false
     }
   }
-
 
 
   def parseComment() = {
@@ -210,35 +211,35 @@ class Lexer(var token: Token,
     var flag1 = true
     var flag2 = true
 
-    do{
-      do{
-        if(ch == '\n' || ch == '*' || ch == EOF)
+    do {
+      do {
+        if (ch == '\n' || ch == '*' || ch == EOF)
           flag1 = false
         else
           getCh()
-      }while(flag1)
-      if(ch == '\n'){
+      } while (flag1)
+      if (ch == '\n') {
         lineNum = lineNum + 1
         getCh()
-      }else if(ch == '*'){
+      } else if (ch == '*') {
         getCh()
-        if(ch == '/'){
+        if (ch == '/') {
           getCh()
           flag2 = false
         }
-      }else{
-        error("no end comment sign",fileName,this)
+      } else {
+        error("no end comment sign", fileName, this)
       }
-    }while(flag2)
+    } while (flag2)
   }
 
 
   def skipWhiteSpace() = {
     var flag = false
-    while(ch == ' ' || ch == '\t' || ch == '\r'){
-      if(ch == '\r'){
+    while (ch == ' ' || ch == '\t' || ch == '\r') {
+      if (ch == '\r') {
         getCh()
-        if(ch != '\n')
+        if (ch != '\n')
           flag = false
         lineNum += 1
       }
@@ -247,64 +248,65 @@ class Lexer(var token: Token,
     }
   }
 }
+
 object Lexer {
   val EOF: Int = -1
   val keyWords: Map[Token.Value, String] = Map(
     Token.TK_PLUS -> "+",
-    Token.TK_MINUS->"-",
-    Token.TK_STAR->"*",
-    Token.TK_DIVIDE->"/",
-    Token.TK_MOD->"%",
-    Token.TK_NEQ->"!=",
-    Token.TK_EQ->"==",
-    Token.TK_LT->"<",
-    Token.TK_LEQ->"<=",
-    Token.TK_GT->">",
-    Token.TK_GEQ->">=",
-    Token.TK_ASSIGN->"=",
-    Token.TK_POINTSTO->"->",
-    Token.TK_DOT->".",
-    Token.TK_AND->"&",
-    Token.TK_OPENPA->"(",
-    Token.TK_CLOSEPA->")",
-    Token.TK_OPENBR->"[",
-    Token.TK_CLOSEBR->"]",
-    Token.TK_BEGIN->"{",
-    Token.TK_END->"}",
-    Token.TK_SEMICOLON->";",
-    Token.TK_COMMA->",",
-    Token.TK_ELLIPSIS->"...",
-    Token.TK_EOF->"End_Of_File",
-    Token.TK_CINT->"integer",
-    Token.TK_CCHAR->"character",
-    Token.TK_CSTR->"string",
-    Token.KW_CHAR->"char",
-    Token.KW_SHORT->"short",
-    Token.KW_INT->"int",
-    Token.KW_VOID->"void",
-    Token.KW_STRUCT->"struct",
-    Token.KW_IF->"if",
-    Token.KW_ELSE->"else",
-    Token.KW_FOR->"for",
-    Token.KW_CONTINUE->"continue",
-    Token.KW_BREAK->"break",
-    Token.KW_RETURN->"return",
-    Token.KW_SIZEOF->"sizeof",
-    Token.KW_ALIGN->"__align",
-    Token.KW_CDECL->"__cdecl",
-    Token.KW_STDCALL->"__stdcall"
+    Token.TK_MINUS -> "-",
+    Token.TK_STAR -> "*",
+    Token.TK_DIVIDE -> "/",
+    Token.TK_MOD -> "%",
+    Token.TK_NEQ -> "!=",
+    Token.TK_EQ -> "==",
+    Token.TK_LT -> "<",
+    Token.TK_LEQ -> "<=",
+    Token.TK_GT -> ">",
+    Token.TK_GEQ -> ">=",
+    Token.TK_ASSIGN -> "=",
+    Token.TK_POINTSTO -> "->",
+    Token.TK_DOT -> ".",
+    Token.TK_AND -> "&",
+    Token.TK_OPENPA -> "(",
+    Token.TK_CLOSEPA -> ")",
+    Token.TK_OPENBR -> "[",
+    Token.TK_CLOSEBR -> "]",
+    Token.TK_BEGIN -> "{",
+    Token.TK_END -> "}",
+    Token.TK_SEMICOLON -> ";",
+    Token.TK_COMMA -> ",",
+    Token.TK_ELLIPSIS -> "...",
+    Token.TK_EOF -> "End_Of_File",
+    Token.TK_CINT -> "integer",
+    Token.TK_CCHAR -> "character",
+    Token.TK_CSTR -> "string",
+    Token.KW_CHAR -> "char",
+    Token.KW_SHORT -> "short",
+    Token.KW_INT -> "int",
+    Token.KW_VOID -> "void",
+    Token.KW_STRUCT -> "struct",
+    Token.KW_IF -> "if",
+    Token.KW_ELSE -> "else",
+    Token.KW_FOR -> "for",
+    Token.KW_CONTINUE -> "continue",
+    Token.KW_BREAK -> "break",
+    Token.KW_RETURN -> "return",
+    Token.KW_SIZEOF -> "sizeof",
+    Token.KW_ALIGN -> "__align",
+    Token.KW_CDECL -> "__cdecl",
+    Token.KW_STDCALL -> "__stdcall"
   )
 
-  var tkWords = Map[Int,String]()
-  def readSourceFile(file:File):String = {
-    Source.fromFile(file).getLines().reduce(_+_)
+  var tkWords = Map[Int, String]()
+
+  def readSourceFile(file: File): String = {
+    Source.fromFile(file).getLines().reduce(_ + _)
   }
 
 
+  def isNodigit(c: Char) = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
 
-  def isNodigit(c:Char) = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
-
-  def isDigit(c:Char) = c >= '0' && c <= '9'
+  def isDigit(c: Char) = c >= '0' && c <= '9'
 
 
 }
