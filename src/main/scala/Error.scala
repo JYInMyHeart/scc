@@ -32,11 +32,11 @@ object Error {
 
   def getTkstr(v: Token.Value, tkTable: Map[Token.Value, String], sourceStr: String): String = {
     if (v.id > tkTable.size)
-      return null
+      null
     else if (v >= Token.TK_CINT && v <= Token.TK_CSTR)
-      return sourceStr
+      sourceStr
     else
-      return tkTable.get(v).get
+      tkTable(v)
   }
 
   def linkError(fmt: String, fileName: String, lexer: Lexer) =

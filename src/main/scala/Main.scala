@@ -1,6 +1,6 @@
 import java.io.File
 
-import Lexer._
+import Lexer.readSourceFile
 
 object Main {
   def main(args: Array[String]): Unit = {
@@ -10,6 +10,9 @@ object Main {
     while (lexer.token != Token.TK_EOF) {
       lexer.getToken()
     }
+//    import io.AnsiColor._
+//    println(s"${BLUE}${BOLD}Hello 1979!${RESET}")
+
 
 
   }
