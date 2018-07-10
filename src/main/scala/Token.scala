@@ -44,5 +44,7 @@ object Token extends Enumeration {
   KW_ALIGN,
   KW_CDECL,
   KW_STDCALL,
-  TK_IDENT = Value
+  TK_IDENT
+  = Value
+
 }

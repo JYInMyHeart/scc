@@ -1,3 +1,4 @@
 int main(){
+    string a = "2";
     printf("hello,world");
 }

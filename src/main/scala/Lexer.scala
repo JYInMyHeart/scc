@@ -1,15 +1,13 @@
-import java.io.File
+import java.io.{File, FileInputStream, PushbackInputStream}
 
 import Error.{error, warning}
 import Lexer.EOF
 import Token.Token
 
-import scala.io.Source
-
 class Lexer(var token: Token,
             var lineNum: Int,
             var ch: Char,
-            val fin: String,
+            val fin: PushbackInputStream,
             var count: Int,
             val fileName: String) {
   def parseIdentifier() = {
@@ -20,11 +18,31 @@ class Lexer(var token: Token,
       temp += ch
       getCh()
     }
-    tkWords += count -> temp
+    //    token = Token.TK_IDENT
+    token = Lexer.keyWords.map(t => (t._2, t._1)).getOrElse(temp, Token.TK_IDENT)
+    tkWords +:= (count, token, temp, lineNum)
   }
 
-  def parseNum() = {
+  def parseNum(): String = {
+    var c: String = ""
     getCh()
+    var flag = true
+    while (flag) {
+      if (Lexer.isDigit(ch)) {
+        c += ch
+        getCh()
+      }
+      else if (ch == ';') {
+        flag = false
+        ungetC(ch)
+        c
+      }
+      else {
+        error("undefined", fileName, this)
+        flag = false
+      }
+    }
+    c
   }
 
   def parseString(sep: Char): String = {
@@ -32,7 +50,7 @@ class Lexer(var token: Token,
     var str: String = sep.toString
     getCh()
     var flag = true
-    while (true) {
+    while (flag) {
       if (ch == sep)
         flag = false
       else if (ch == '\\') {
@@ -75,10 +93,10 @@ class Lexer(var token: Token,
     ch match {
       case x if (x >= 'a' && x <= 'z') || (x >= 'A' && x <= 'Z') || x == '_' =>
         parseIdentifier()
-      case x if x >= '0' && x <= '9' => {
+      case x if x >= '0' && x <= '9' =>
         parseNum()
         token = Token.TK_CINT
-      }
+        Lexer.tkWords +:= (count, token, ch.toString, lineNum)
       case '-' =>
         getCh()
         if (ch == '>') {
@@ -86,19 +104,25 @@ class Lexer(var token: Token,
           getCh()
         } else
           token = Token.TK_MINUS
+        Lexer.tkWords +:= (count, token, ch.toString, lineNum)
       case '/' =>
         token = Token.TK_DIVIDE
+        Lexer.tkWords +:= (count, token, ch.toString, lineNum)
         getCh()
       case '%' =>
         token = Token.TK_MOD
+        Lexer.tkWords +:= (count, token, ch.toString, lineNum)
         getCh()
       case '=' =>
+        var temp = ch.toString
         getCh()
         if (ch == '=') {
           token = Token.TK_EQ
+          temp += ch
           getCh()
         } else
           token = Token.TK_ASSIGN
+        Lexer.tkWords +:= (count, token, temp, lineNum)
       case '!' =>
         getCh()
         if (ch == '!') {
@@ -106,6 +130,7 @@ class Lexer(var token: Token,
           getCh()
         } else
           error("unsupported !", fileName, this)
+        Lexer.tkWords +:= (count, token, ch.toString, lineNum)
       case '<' =>
         getCh()
         if (ch == '=') {
@@ -113,6 +138,7 @@ class Lexer(var token: Token,
           getCh()
         } else
           token = Token.TK_LT
+        Lexer.tkWords +:= (count, token, ch.toString, lineNum)
       case '>' =>
         getCh()
         if (ch == '=') {
@@ -120,6 +146,7 @@ class Lexer(var token: Token,
           getCh()
         } else
           token = Token.TK_GT
+        Lexer.tkWords +:= (count, token, ch.toString, lineNum)
       case '.' =>
         getCh()
         if (ch == '.') {
@@ -131,45 +158,59 @@ class Lexer(var token: Token,
           getCh()
         } else
           token = Token.TK_DOT
+        Lexer.tkWords +:= (count, token, ch.toString, lineNum)
       case '&' =>
         token = Token.TK_AND
+        Lexer.tkWords +:= (count, token, ch.toString, lineNum)
         getCh()
       case ';' =>
         token = Token.TK_SEMICOLON
+        Lexer.tkWords +:= (count, token, ch.toString, lineNum)
         getCh()
       case ']' =>
         token = Token.TK_CLOSEBR
+        Lexer.tkWords +:= (count, token, ch.toString, lineNum)
         getCh()
       case '}' =>
         token = Token.TK_END
+        Lexer.tkWords +:= (count, token, ch.toString, lineNum)
         getCh()
       case ')' =>
         token = Token.TK_CLOSEPA
+        Lexer.tkWords +:= (count, token, ch.toString, lineNum)
         getCh()
       case '{' =>
         token = Token.TK_BEGIN
+        Lexer.tkWords +:= (count, token, ch.toString, lineNum)
         getCh()
       case '[' =>
         token = Token.TK_OPENBR
+        Lexer.tkWords +:= (count, token, ch.toString, lineNum)
         getCh()
       case ',' =>
         token = Token.TK_COMMA
+        Lexer.tkWords +:= (count, token, ch.toString, lineNum)
         getCh()
       case '(' =>
         token = Token.TK_OPENPA
+        Lexer.tkWords +:= (count, token, ch.toString, lineNum)
         getCh()
       case '*' =>
         token = Token.TK_STAR
+        Lexer.tkWords +:= (count, token, ch.toString, lineNum)
         getCh()
       case '\'' =>
-        parseString(ch)
+        val str = parseString(ch)
         token = Token.TK_CCHAR
+        Lexer.tkWords +:= (count, token, str, lineNum)
       //        tkValue = tkstr.data
       case '\"' =>
-        parseString(ch)
+        val str = parseString(ch)
         token = Token.TK_CSTR
+        Lexer.tkWords +:= (count, token, str, lineNum)
       case EOF =>
         token = Token.TK_EOF
+        Lexer.tkWords +:= (count, token, ch.toString, lineNum)
       case _ =>
         error("unknown characters", fileName, this)
         getCh()
@@ -177,13 +218,13 @@ class Lexer(var token: Token,
   }
 
   def getCh() = {
-    ch = fin(count)
+    ch = fin.read().toChar
     count += 1
   }
 
-  def ungetC(c: Char, str: String) = {
+  def ungetC(c: Char) = {
     count = count - 1
-    ch = fin(count)
+    fin.unread(1)
   }
 
   def preprocess() = {
@@ -196,7 +237,7 @@ class Lexer(var token: Token,
         if (ch == '*') {
           parseComment()
         } else {
-          ungetC(ch, fin)
+          ungetC(ch)
           ch = '/'
           flag = false
         }
@@ -243,7 +284,7 @@ class Lexer(var token: Token,
           flag = false
         lineNum += 1
       }
-      println(ch)
+      //      println(ch)
       getCh()
     }
   }
@@ -297,16 +338,35 @@ object Lexer {
     Token.KW_STDCALL -> "__stdcall"
   )
 
-  var tkWords = Map[Int, String]()
+  var tkWords: List[(Int, Token.Value, String, Int)] = List()
 
-  def readSourceFile(file: File): String = {
-    Source.fromFile(file).getLines().reduce(_ + _)
+  def readSourceFile(file: File): PushbackInputStream = {
+    new PushbackInputStream(new FileInputStream(file))
   }
 
 
   def isNodigit(c: Char) = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
 
   def isDigit(c: Char) = c >= '0' && c <= '9'
+
+  def colorToken = {
+    def toColor = {
+      import io.AnsiColor._
+      tkWords.reverse.map(xs => {
+        if (xs._2 <= Token.TK_AND) {
+          s"${RED}${BOLD}${xs._3}${RESET}"
+        } else if (xs._2 <= Token.TK_ELLIPSIS && xs._2 > Token.TK_AND) {
+          s"${YELLOW}${BOLD}${xs._3}${RESET}"
+        } else if (xs._2 <= Token.KW_CHAR && xs._2 >= Token.TK_CINT) {
+          s"${GREEN}${BOLD}${xs._3}${RESET}"
+        } else {
+          s"${BLUE}${BOLD}${xs._3}${RESET} "
+        }
+      })
+    }
+
+    toColor.foreach(print)
+  }
 
 
 }
