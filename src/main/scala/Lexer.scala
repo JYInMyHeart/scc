@@ -230,7 +230,7 @@ class Lexer(var token: Token,
   def preprocess() = {
     var flag = true
     while (flag) {
-      if (ch == ' ' || ch == '\t' || ch == '\r')
+      if (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n')
         skipWhiteSpace()
       else if (ch == '/') {
         getCh()
@@ -259,7 +259,7 @@ class Lexer(var token: Token,
         else
           getCh()
       } while (flag1)
-      if (ch == '\n') {
+      if (ch == '\n' || ch == '\r' || ch == '\t') {
         lineNum = lineNum + 1
         getCh()
       } else if (ch == '*') {
@@ -277,7 +277,7 @@ class Lexer(var token: Token,
 
   def skipWhiteSpace() = {
     var flag = false
-    while (ch == ' ' || ch == '\t' || ch == '\r') {
+    while (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n') {
       if (ch == '\r') {
         getCh()
         if (ch != '\n')
@@ -354,9 +354,9 @@ object Lexer {
       import io.AnsiColor._
       tkWords.reverse.map(xs => {
         if (xs._2 <= Token.TK_AND) {
-          s"${RED}${BOLD}${xs._3}${RESET}"
-        } else if (xs._2 <= Token.TK_ELLIPSIS && xs._2 > Token.TK_AND) {
           s"${YELLOW}${BOLD}${xs._3}${RESET}"
+        } else if (xs._2 <= Token.TK_ELLIPSIS && xs._2 > Token.TK_AND) {
+          s"${RED}${BOLD}${xs._3}${RESET}"
         } else if (xs._2 <= Token.KW_CHAR && xs._2 >= Token.TK_CINT) {
           s"${GREEN}${BOLD}${xs._3}${RESET}"
         } else {
