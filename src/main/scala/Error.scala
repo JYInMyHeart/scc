@@ -2,12 +2,12 @@ import ErrorLevel.ErrorLevel
 import WorkStage.WorkStage
 
 object Error {
-  def handleException(stage: WorkStage, level: ErrorLevel, fmt: String, fileName: String, lexer: Lexer) = {
+  def handleException(stage: WorkStage, level: ErrorLevel, fmt: String, lexer: Lexer) = {
     if (stage == WorkStage.STAGE_COMPILE) {
       if (level == ErrorLevel.LEVEL_WARNING)
-        println(s"$fileName (line ${lexer.lineNum}) compiler warning:${fmt}")
+        println(s"${lexer.fileName} (line ${lexer.lineNum}) compiler warning:${fmt}")
       else {
-        println(s"$fileName (line ${lexer.lineNum}) compiler error:${fmt}")
+        println(s"${lexer.fileName} (line ${lexer.lineNum}) compiler error:${fmt}")
         System.exit(-1)
       }
     } else {
@@ -16,17 +16,17 @@ object Error {
     }
   }
 
-  def warning(fmt: String, fileName: String, lexer: Lexer) =
-    handleException(WorkStage.STAGE_COMPILE, ErrorLevel.LEVEL_WARNING, fmt, fileName, lexer)
+  def warning(fmt: String,  lexer: Lexer) =
+    handleException(WorkStage.STAGE_COMPILE, ErrorLevel.LEVEL_WARNING, fmt, lexer)
 
-  def error(fmt: String, fileName: String, lexer: Lexer) =
-    handleException(WorkStage.STAGE_COMPILE, ErrorLevel.LEVEL_ERROR, fmt, fileName, lexer)
+  def error(fmt: String,  lexer: Lexer) =
+    handleException(WorkStage.STAGE_COMPILE, ErrorLevel.LEVEL_ERROR, fmt, lexer)
 
-  def expect(msg: String, fileName: String, lexer: Lexer) = error(s"miss $msg", fileName, lexer)
+  def expect(msg: String, lexer: Lexer) = error(s"miss $msg", lexer)
 
-  def skip(c: Token.Value, fileName: String, lexer: Lexer) = {
+  def skip(c: Token.Value,  lexer: Lexer) = {
     if (lexer.token != c)
-      error(s"miss ${getTkstr(c, Lexer.keyWords, fileName)}", fileName, lexer)
+      error(s"miss ${getTkstr(c, Lexer.keyWords, lexer.fileName)}", lexer)
     lexer.getToken()
   }
 
@@ -39,8 +39,8 @@ object Error {
       tkTable(v)
   }
 
-  def linkError(fmt: String, fileName: String, lexer: Lexer) =
-    handleException(WorkStage.STAGE_LINK, ErrorLevel.LEVEL_ERROR, fmt, fileName, lexer)
+  def linkError(fmt: String,  lexer: Lexer) =
+    handleException(WorkStage.STAGE_LINK, ErrorLevel.LEVEL_ERROR, fmt, lexer)
 
 
 }

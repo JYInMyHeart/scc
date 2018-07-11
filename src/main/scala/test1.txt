@@ -20,8 +20,5 @@ void main(){
     int a = 2.34;
     printf("hello,world");
 }
-int a(int b,...){
-    return a;
-}
 
 End_Of_File
