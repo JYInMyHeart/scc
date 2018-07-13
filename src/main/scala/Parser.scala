@@ -1,6 +1,7 @@
 import Token._
 import Error._
 import SynTax.SynTaxState._
+import StoreClass._
 
 class Parser(var syntaxState: SynTaxState,
              var syntaxLevel: Int,
@@ -8,7 +9,7 @@ class Parser(var syntaxState: SynTaxState,
 
 
   def printTab(syntaxLevel: Int) = {
-    for(i <- 0 to syntaxLevel)
+    for (i <- 0 to syntaxLevel)
       print("\t")
   }
 
@@ -20,7 +21,7 @@ class Parser(var syntaxState: SynTaxState,
         print(" ")
         Lexer.colorToken
       case SNTX_LF_HT =>
-        if(lexer.token == TK_END)
+        if (lexer.token == TK_END)
           syntaxLevel -= 1
         print("\n")
         printTab(syntaxLevel)
@@ -102,33 +103,33 @@ class Parser(var syntaxState: SynTaxState,
       case TK_OPENPA =>
         lexer.getToken()
         expression()
-        skip(TK_CLOSEPA,lexer)
+        skip(TK_CLOSEPA, lexer)
       case _ =>
         val t = lexer.token
         lexer.getToken()
-        if(t < TK_IDENT)
-          expect("const characters",lexer)
+        if (t < TK_IDENT)
+          expect("const characters", lexer)
     }
   }
 
   def argumentExpressionList(): Unit = {
     lexer.getToken()
-    if(lexer.token != TK_CLOSEPA){
+    if (lexer.token != TK_CLOSEPA) {
       var flag = true
-      while(flag){
+      while (flag) {
         assignmentExpression()
-        if(lexer.token == TK_CLOSEPA)
+        if (lexer.token == TK_CLOSEPA)
           flag = false
-        skip(TK_COMMA,lexer)
+        skip(TK_COMMA, lexer)
       }
     }
-    skip(TK_CLOSEPA,lexer)
+    skip(TK_CLOSEPA, lexer)
   }
 
   def postfixExpression() = {
     primaryExpression()
     var flag = true
-    while(flag){
+    while (flag) {
       lexer.token match {
         case TK_DOT =>
           lexer.getToken()
@@ -141,7 +142,7 @@ class Parser(var syntaxState: SynTaxState,
         case TK_OPENBR =>
           lexer.getToken()
           expression()
-          skip(TK_CLOSEBR,lexer)
+          skip(TK_CLOSEBR, lexer)
         case TK_OPENPA =>
           argumentExpressionList()
         case _ =>
@@ -152,12 +153,12 @@ class Parser(var syntaxState: SynTaxState,
 
   def sizeofExpression() = {
     lexer.getToken()
-    skip(TK_OPENPA,lexer)
+    skip(TK_OPENPA, lexer)
     typeSpecifier()
-    skip(TK_CLOSEPA,lexer)
+    skip(TK_CLOSEPA, lexer)
   }
 
-  def unaryExpression():Unit = {
+  def unaryExpression(): Unit = {
     lexer.token match {
       case TK_AND =>
         lexer.getToken()
@@ -181,7 +182,7 @@ class Parser(var syntaxState: SynTaxState,
 
   def multiplicativeExpression() = {
     unaryExpression()
-    while(lexer.token == TK_STAR || lexer.token == TK_DIVIDE || lexer.token == TK_MOD){
+    while (lexer.token == TK_STAR || lexer.token == TK_DIVIDE || lexer.token == TK_MOD) {
       lexer.getToken()
       unaryExpression()
     }
@@ -189,7 +190,7 @@ class Parser(var syntaxState: SynTaxState,
 
   def additiveExpression() = {
     multiplicativeExpression()
-    while(lexer.token == TK_PLUS || lexer.token == TK_MINUS){
+    while (lexer.token == TK_PLUS || lexer.token == TK_MINUS) {
       lexer.getToken()
       multiplicativeExpression()
     }
@@ -198,7 +199,7 @@ class Parser(var syntaxState: SynTaxState,
   def relationalExpression() = {
     additiveExpression()
     while (lexer.token == TK_LT || lexer.token == TK_LEQ
-      || lexer.token == TK_GT || lexer.token == TK_GEQ){
+      || lexer.token == TK_GT || lexer.token == TK_GEQ) {
       lexer.getToken()
       additiveExpression()
     }
@@ -212,7 +213,7 @@ class Parser(var syntaxState: SynTaxState,
     }
   }
 
-  def assignmentExpression():Unit = {
+  def assignmentExpression(): Unit = {
     equalityExpression()
     if (lexer.token == TK_ASSIGN) {
       lexer.getToken()
@@ -224,7 +225,7 @@ class Parser(var syntaxState: SynTaxState,
     assignmentExpression()
   }
 
-  def externalDeclaration(l: Int): Unit = {
+  def externalDeclaration(l: StoreClass.Value): Unit = {
     if (typeSpecifier() == 0)
       expect("<type>", lexer)
 
@@ -396,7 +397,7 @@ class Parser(var syntaxState: SynTaxState,
     if (lexer.token != TK_SEMICOLON)
       expression()
     syntaxState = SNTX_LF_HT
-    skip(TK_SEMICOLON,lexer)
+    skip(TK_SEMICOLON, lexer)
   }
 
   def breakStatement() = {
@@ -408,7 +409,7 @@ class Parser(var syntaxState: SynTaxState,
   def continueStatement() = {
     lexer.getToken()
     syntaxState = SNTX_LF_HT
-    skip(TK_SEMICOLON,lexer)
+    skip(TK_SEMICOLON, lexer)
   }
 
   def forStatement() = {
@@ -419,7 +420,7 @@ class Parser(var syntaxState: SynTaxState,
     skip(TK_SEMICOLON, lexer)
     if (lexer.token != TK_SEMICOLON)
       expression()
-    skip(TK_SEMICOLON,lexer)
+    skip(TK_SEMICOLON, lexer)
     if (lexer.token != TK_CLOSEPA)
       expression()
     syntaxState = SNTX_LF_HT
@@ -481,3 +482,5 @@ class Parser(var syntaxState: SynTaxState,
     }
   }
 }
+
+
