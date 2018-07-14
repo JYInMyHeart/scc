@@ -12,8 +12,8 @@ class Lexer(var token: Token,
             val fileName: String) {
   def parseIdentifier() = {
     import Lexer.{isDigit, isNodigit, tkWords}
-    var temp = ch.toString
-    getCh()
+    var temp = ""
+//    getCh()
     while (isDigit(ch) || isNodigit(ch)) {
       temp += ch
       getCh()
@@ -24,8 +24,8 @@ class Lexer(var token: Token,
   }
 
   def parseNum(): String = {
-    var c: String = ch.toString
-    getCh()
+    var c: String = ""
+//    getCh()
     var flag = true
     do {
       c += ch
@@ -220,6 +220,7 @@ class Lexer(var token: Token,
         error("unknown characters", this)
         getCh()
     }
+//    new Parser(SynTax.SynTaxState.SNTX_NULL,0,this).syntaxIndent()
   }
 
   def getCh() = {

@@ -68,15 +68,17 @@ class Parser(var syntaxState: SynTaxState,
           case TK_CINT =>
             lexer.getToken()
           //            n = tkvalue
+          case _ =>
         }
         skip(TK_CLOSEBR, lexer)
         directDeclaratorPostfix()
+      case _ =>
     }
   }
 
   def directDeclarator() = {
     lexer.token match {
-      case TK_IDENT =>
+      case x if x >= TK_IDENT =>
         lexer.getToken()
       case _ =>
         expect("identifier", lexer)
@@ -88,7 +90,7 @@ class Parser(var syntaxState: SynTaxState,
     while (lexer.token == TK_STAR)
       lexer.getToken()
     var fc = functionCallingConvention()
-    structMemberAlignment
+    structMemberAlignment()
     directDeclarator()
 
   }
@@ -133,11 +135,12 @@ class Parser(var syntaxState: SynTaxState,
       lexer.token match {
         case TK_DOT =>
           lexer.getToken()
-          lexer.token |= SC_MEMBER
+          lexer.token = TK_IDENT
           lexer.getToken()
         case TK_POINTSTO =>
           lexer.getToken()
-          lexer.token |= SC_MEMBER
+          lexer.token = TK_IDENT
+//          lexer.token |= SC_MEMBER
           lexer.getToken()
         case TK_OPENBR =>
           lexer.getToken()
@@ -257,14 +260,15 @@ class Parser(var syntaxState: SynTaxState,
     }
   }
 
-  def structDeclaration() = {
+  def structDeclaration(): Unit = {
     typeSpecifier()
     var flag = true
     while (flag) {
       declarator()
       if (lexer.token == TK_SEMICOLON)
         flag = false
-      skip(TK_COMMA, lexer)
+      else
+        skip(TK_COMMA, lexer)
     }
     syntaxState = SNTX_LF_HT
     skip(TK_SEMICOLON, lexer)
@@ -322,7 +326,6 @@ class Parser(var syntaxState: SynTaxState,
         typeFound = 1
         structSpecifier()
         syntaxState = SNTX_SP
-        lexer.getToken()
       case _ => error("error", lexer)
     }
     typeFound
@@ -344,7 +347,7 @@ class Parser(var syntaxState: SynTaxState,
     fc
   }
 
-  def structMemberAlignment = {
+  def structMemberAlignment() = {
     lexer.token match {
       case KW_ALIGN => {
         lexer.getToken()
@@ -357,6 +360,7 @@ class Parser(var syntaxState: SynTaxState,
         }
         skip(TK_CLOSEPA, lexer)
       }
+      case _ =>
     }
   }
 
@@ -430,8 +434,8 @@ class Parser(var syntaxState: SynTaxState,
 
   def expressionStatement() = {
     lexer.token match {
-      case TK_SEMICOLON => expression()
-      case _ =>
+      case TK_SEMICOLON =>
+      case _ => expression()
     }
     syntaxState = SNTX_LF_HT
     skip(TK_SEMICOLON, lexer)
@@ -463,7 +467,7 @@ class Parser(var syntaxState: SynTaxState,
     compoundStatement()
   }
 
-  def statement() = {
+  def statement():Unit = {
     lexer.token match {
       case TK_BEGIN =>
         compoundStatement()

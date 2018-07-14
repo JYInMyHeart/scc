@@ -26,7 +26,7 @@ object Error {
 
   def skip(c: Token.Value,  lexer: Lexer) = {
     if (lexer.token != c)
-      error(s"miss ${getTkstr(c, Lexer.keyWords, lexer.fileName)}", lexer)
+      error(s"<skip>miss ${getTkstr(c, Lexer.keyWords, lexer.fileName)}", lexer)
     lexer.getToken()
   }
 

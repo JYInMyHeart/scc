@@ -7,9 +7,11 @@ object Main {
     val fileName = "./src/main/scala/test.txt"
     val fin: PushbackInputStream = readSourceFile(new File(fileName))
     val lexer = new Lexer(token = TK_MOD, 1, ' ', fin, 0, fileName)
-    while (lexer.ch.toShort != -1) {
-      lexer.getToken()
-    }
+//    while (lexer.ch.toShort != -1) {
+//      lexer.getToken()
+//    }
+    lexer.getToken()
+    new Parser(SynTax.SynTaxState.SNTX_NULL,0,lexer).translationUnit()
     println(s"lineCount= ${lexer.lineNum}")
     Lexer.colorToken
   }
