@@ -220,7 +220,7 @@ class Lexer(var token: Token,
         error("unknown characters", this)
         getCh()
     }
-//    new Parser(SynTax.SynTaxState.SNTX_NULL,0,this).syntaxIndent()
+    new Parser(SynTax.SynTaxState.SNTX_NULL,0,this).syntaxIndent()
   }
 
   def getCh() = {
@@ -356,22 +356,27 @@ object Lexer {
   def isDigit(c: Char) = c >= '0' && c <= '9'
 
   def colorToken = {
-    def toColor(list: List[(Int, Value, String, Int)]) = {
-      import io.AnsiColor._
-      list.map(xs => {
-        if (xs._2 <= TK_AND) {
-          s"${YELLOW}${BOLD}${xs._3}${RESET}"
-        } else if (xs._2 <= TK_ELLIPSIS && xs._2 > TK_AND) {
-          s"${RED}${BOLD}${xs._3}${RESET}"
-        } else if (xs._2 <= KW_CHAR && xs._2 >= TK_CINT) {
-          s"${GREEN}${BOLD}${xs._3}${RESET} "
-        } else {
-          s"${BLUE}${BOLD}${xs._3}${RESET} "
-        }
-      })
-    }
+
 
     tkWords.reverse.groupBy(x => x._4).toList.sortBy(y => y._1).map(xs => toColor(xs._2).reduce(_ + _) + "\r\n").foreach(print)
+
+  }
+  def toColor(list: List[(Int, Value, String, Int)]) = {
+    list.map(xs => color(xs))
+  }
+
+  def color(i:(Int, Value, String, Int)):String = {
+    import io.AnsiColor._
+
+      if (i._2 <= TK_AND) {
+        s"${YELLOW}${BOLD}${i._3}${RESET}"
+      } else if (i._2 <= TK_ELLIPSIS && i._2 > TK_AND) {
+        s"${RED}${BOLD}${i._3}${RESET}"
+      } else if (i._2 <= KW_CHAR && i._2 >= TK_CINT) {
+        s"${GREEN}${BOLD}${i._3}${RESET} "
+      } else {
+        s"${BLUE}${BOLD}${i._3}${RESET} "
+      }
 
   }
 
