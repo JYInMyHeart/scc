@@ -12,8 +12,8 @@ class Lexer(var token: Token,
             val fileName: String) {
   def parseIdentifier() = {
     import Lexer.{isDigit, isNodigit, tkWords}
-    var temp = ""
-//    getCh()
+    var temp = ch.toString
+    getCh()
     while (isDigit(ch) || isNodigit(ch)) {
       temp += ch
       getCh()

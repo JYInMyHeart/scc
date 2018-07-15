@@ -98,6 +98,7 @@ class Parser(var syntaxState: SynTaxState,
   def primaryExpression() = {
     lexer.token match {
       case TK_CINT =>
+        lexer.getToken()
       case TK_CCHAR =>
         lexer.getToken()
       case TK_CSTR =>
@@ -122,7 +123,8 @@ class Parser(var syntaxState: SynTaxState,
         assignmentExpression()
         if (lexer.token == TK_CLOSEPA)
           flag = false
-        skip(TK_COMMA, lexer)
+        else
+          skip(TK_COMMA, lexer)
       }
     }
     skip(TK_CLOSEPA, lexer)
@@ -140,7 +142,7 @@ class Parser(var syntaxState: SynTaxState,
         case TK_POINTSTO =>
           lexer.getToken()
           lexer.token = TK_IDENT
-//          lexer.token |= SC_MEMBER
+          //          lexer.token |= SC_MEMBER
           lexer.getToken()
         case TK_OPENBR =>
           lexer.getToken()
@@ -246,15 +248,20 @@ class Parser(var syntaxState: SynTaxState,
               funcBody()
               flag = false
             }
-            case TK_ASSIGN =>
-              lexer.getToken()
-              initializer()
-            case TK_COMMA =>
-              lexer.getToken()
-            case _ =>
-              syntaxState = SNTX_LF_HT
-              skip(TK_SEMICOLON, lexer)
-              flag = false
+            case _ => {
+              if (lexer.token == TK_ASSIGN) {
+                lexer.getToken()
+                initializer()
+              }
+              lexer.token match {
+                case TK_COMMA =>
+                  lexer.getToken()
+                case _ =>
+                  syntaxState = SNTX_LF_HT
+                  skip(TK_SEMICOLON, lexer)
+                  flag = false
+              }
+            }
           }
         }
     }
@@ -370,7 +377,11 @@ class Parser(var syntaxState: SynTaxState,
       assignmentExpression()
       if (lexer.token != TK_COMMA)
         flag = false
-      lexer.getToken()
+      //      if (lexer.token != TK_CLOSEBR &&  lexer.token != TK_SEMICOLON && lexer.token != TK_CLOSEPA) {
+      //        lexer.getToken()
+      //      }
+      else
+        lexer.getToken()
     }
   }
 
@@ -456,10 +467,15 @@ class Parser(var syntaxState: SynTaxState,
     syntaxState = SNTX_LF_HT
     syntaxLevel += 1
     lexer.getToken()
-    while (isTypeSpecifier(lexer.token))
-      externalDeclaration(SC_LOCAL)
-    while (lexer.token != TK_END)
-      statement()
+
+    while (lexer.token != TK_END) {
+      if (isTypeSpecifier(lexer.token))
+        externalDeclaration(SC_LOCAL)
+      else{
+        statement()
+      }
+    }
+    syntaxState = SNTX_LF_HT
     lexer.getToken()
   }
 
@@ -467,7 +483,7 @@ class Parser(var syntaxState: SynTaxState,
     compoundStatement()
   }
 
-  def statement():Unit = {
+  def statement(): Unit = {
     lexer.token match {
       case TK_BEGIN =>
         compoundStatement()
