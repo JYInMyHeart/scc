@@ -16,16 +16,16 @@ class Parser(var syntaxState: SynTaxState,
   def syntaxIndent() = {
     syntaxState match {
       case SNTX_NULL =>
-        Lexer.color(Lexer.tkWords.head)
+        print(Lexer.color(Lexer.tkWords.head))
       case SNTX_SP =>
         print(" ")
-        Lexer.color(Lexer.tkWords.head)
+        print(Lexer.color(Lexer.tkWords.head))
       case SNTX_LF_HT =>
         if (lexer.token == TK_END)
           syntaxLevel -= 1
         print("\n")
         printTab(syntaxLevel)
-        Lexer.color(Lexer.tkWords.head)
+        print(Lexer.color(Lexer.tkWords.head))
       case SNTX_DELAY =>
     }
     syntaxState = SNTX_NULL

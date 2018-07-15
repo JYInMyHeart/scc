@@ -13,6 +13,6 @@ object Main {
     lexer.getToken()
     new Parser(SynTax.SynTaxState.SNTX_NULL,0,lexer).translationUnit()
     println(s"lineCount= ${lexer.lineNum}")
-    Lexer.colorToken
+//    Lexer.colorToken
   }
 }

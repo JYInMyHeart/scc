@@ -373,7 +373,7 @@ object Lexer {
       } else if (i._2 <= TK_ELLIPSIS && i._2 > TK_AND) {
         s"${RED}${BOLD}${i._3}${RESET}"
       } else if (i._2 <= KW_CHAR && i._2 >= TK_CINT) {
-        s"${GREEN}${BOLD}${i._3}${RESET} "
+        s"${GREEN}${BOLD}${i._3}${RESET}"
       } else {
         s"${BLUE}${BOLD}${i._3}${RESET} "
       }
