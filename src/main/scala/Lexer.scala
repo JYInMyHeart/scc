@@ -345,7 +345,7 @@ object Lexer {
     KW_STDCALL -> "__stdcall"
   )
 
-  var tkWords: List[(Int, Value, String, Int)] = List()
+  var tkWords: List[(Int, Value, String, Int ,Symbol)] = List()
 
   def readSourceFile(file: File): PushbackInputStream = {
     new PushbackInputStream(new FileInputStream(file))
