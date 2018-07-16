@@ -24,10 +24,10 @@ object Error {
 
   def expect(msg: String, lexer: Lexer) = error(s"miss $msg", lexer)
 
-  def skip(c: Token.Value,  lexer: Lexer) = {
+  def skip(c: Token.Value,  lexer: Lexer)(implicit parser: Parser) = {
     if (lexer.token != c)
       error(s"<skip>miss ${getTkstr(c, Lexer.keyWords, lexer.fileName)}", lexer)
-    lexer.getToken()
+    lexer.getToken(parser)
   }
 
   def getTkstr(v: Token.Value, tkTable: Map[Token.Value, String], sourceStr: String): String = {

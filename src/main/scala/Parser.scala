@@ -8,8 +8,9 @@ class Parser(var syntaxState: SynTaxState,
              val lexer: Lexer) {
 
 
+  implicit val p = this
   def printTab(syntaxLevel: Int) = {
-    for (i <- 0 to syntaxLevel)
+    for (i <- 0 until syntaxLevel)
       print("\t")
   }
 
@@ -34,19 +35,21 @@ class Parser(var syntaxState: SynTaxState,
   def parameterTypeList(): Token.Value = {
     var funcCall: Token.Value = null
     lexer.getToken()
-    while (lexer.token != TK_CLOSEPA) {
-      if (typeSpecifier() != 0)
+    var flag = true
+    while (lexer.token != TK_CLOSEPA && flag) {
+      if (typeSpecifier() == 0)
         error("invalid identifier", lexer)
       declarator()
       if (lexer.token == TK_CLOSEPA)
-        return funcCall
-      skip(TK_COMMA, lexer)
-      if (lexer.token == TK_ELLIPSIS) {
-        funcCall = KW_CDECL
-        lexer.getToken()
-        return funcCall
+        flag = false
+      else {
+        skip(TK_COMMA, lexer)
+        if (lexer.token == TK_ELLIPSIS) {
+          funcCall = KW_CDECL
+          lexer.getToken()
+          flag = false
+        }
       }
-      funcCall
     }
     syntaxState = SNTX_DELAY
     skip(TK_CLOSEPA, lexer)
@@ -236,6 +239,7 @@ class Parser(var syntaxState: SynTaxState,
 
     lexer.token match {
       case TK_SEMICOLON =>
+        syntaxState = SNTX_LF_HT
         lexer.getToken()
       case _ =>
         var flag = true
@@ -331,8 +335,8 @@ class Parser(var syntaxState: SynTaxState,
         lexer.getToken()
       case KW_STRUCT =>
         typeFound = 1
-        structSpecifier()
         syntaxState = SNTX_SP
+        structSpecifier()
       case _ => error("error", lexer)
     }
     typeFound

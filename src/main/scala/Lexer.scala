@@ -18,14 +18,13 @@ class Lexer(var token: Token,
       temp += ch
       getCh()
     }
-    //    token = TK_IDENT
     token = Lexer.keyWords.map(t => (t._2, t._1)).getOrElse(temp, TK_IDENT)
     tkWords +:= (count, token, temp, lineNum)
   }
 
   def parseNum(): String = {
     var c: String = ""
-//    getCh()
+    //    getCh()
     var flag = true
     do {
       c += ch
@@ -82,7 +81,7 @@ class Lexer(var token: Token,
     str
   }
 
-  def getToken(): Unit = {
+  def getToken()(implicit parser:Parser): Unit = {
     preprocess()
     ch match {
       case x if (x >= 'a' && x <= 'z') || (x >= 'A' && x <= 'Z') || x == '_' =>
@@ -92,13 +91,15 @@ class Lexer(var token: Token,
         token = TK_CINT
         Lexer.tkWords +:= (count, token, num, lineNum)
       case '-' =>
+        var pointsto = ch.toString
         getCh()
         if (ch == '>') {
           token = TK_POINTSTO
+          pointsto += ch
           getCh()
         } else
           token = TK_MINUS
-        Lexer.tkWords +:= (count, token, ch.toString, lineNum)
+        Lexer.tkWords +:= (count, token, pointsto, lineNum)
       case '+' =>
         token = TK_PLUS
         Lexer.tkWords +:= (count, token, ch.toString, lineNum)
@@ -220,7 +221,7 @@ class Lexer(var token: Token,
         error("unknown characters", this)
         getCh()
     }
-    new Parser(SynTax.SynTaxState.SNTX_NULL,0,this).syntaxIndent()
+    parser.syntaxIndent()
   }
 
   def getCh() = {
@@ -356,27 +357,30 @@ object Lexer {
   def isDigit(c: Char) = c >= '0' && c <= '9'
 
   def colorToken = {
-
-
-    tkWords.reverse.groupBy(x => x._4).toList.sortBy(y => y._1).map(xs => toColor(xs._2).reduce(_ + _) + "\r\n").foreach(print)
-
+    tkWords.reverse
+      .groupBy(x => x._4)
+      .toList.sortBy(y => y._1)
+      .map(xs => toColor(xs._2)
+        .reduce(_ + _) + "\r\n")
+      .foreach(print)
   }
+
   def toColor(list: List[(Int, Value, String, Int)]) = {
     list.map(xs => color(xs))
   }
 
-  def color(i:(Int, Value, String, Int)):String = {
+  def color(i: (Int, Value, String, Int)): String = {
     import io.AnsiColor._
 
-      if (i._2 <= TK_AND) {
-        s"${YELLOW}${BOLD}${i._3}${RESET}"
-      } else if (i._2 <= TK_ELLIPSIS && i._2 > TK_AND) {
-        s"${RED}${BOLD}${i._3}${RESET}"
-      } else if (i._2 <= KW_CHAR && i._2 >= TK_CINT) {
-        s"${GREEN}${BOLD}${i._3}${RESET}"
-      } else {
-        s"${BLUE}${BOLD}${i._3}${RESET} "
-      }
+    if (i._2 <= TK_AND) {
+      s"${YELLOW}${BOLD}${i._3}${RESET}"
+    } else if (i._2 <= TK_ELLIPSIS && i._2 > TK_AND) {
+      s"${RED}${BOLD}${i._3}${RESET}"
+    } else if (i._2 <= KW_CHAR && i._2 >= TK_CINT) {
+      s"${GREEN}${BOLD}${i._3}${RESET}"
+    } else {
+      s"${BLUE}${BOLD}${i._3}${RESET}"
+    }
 
   }
 
