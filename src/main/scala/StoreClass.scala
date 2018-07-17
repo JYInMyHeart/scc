@@ -12,4 +12,7 @@ object StoreClass extends Enumeration {
  val SC_MEMBER = Value(0x40000000)
  val SC_PARAMS = Value(0x80000000)
 
+  def |(s1:StoreClass.Value)(s2:StoreClass.Value): StoreClass.Value = Value(s1.id | s2.id)
+  def &(s1:StoreClass.Value)(s2:StoreClass.Value): StoreClass.Value = Value(s1.id & s2.id)
+
 }

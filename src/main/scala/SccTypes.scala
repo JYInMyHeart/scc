@@ -1,5 +1,12 @@
 class SccTypes
-case class Symbol()
+case class Symbol(var v:StoreClass.Value,
+                  var r:Int,
+                  var c:Int,
+                  var sccType: SccType,
+                  var next:Symbol,
+                  var prevTok:Symbol){
+
+}
 case class SccType(var t:TypeCode.Value,
                    var symbol: Symbol)
 object TypeCode extends Enumeration{
@@ -13,5 +20,6 @@ object TypeCode extends Enumeration{
   val T_BTYPE = Value(0x000f)
   val T_ARRAY = Value(0x0010)
 
-  def |(t1:TypeCode.Value,t2:TypeCode.Value) = Value(t1.id | t2.id)
+  def |(t1:TypeCode.Value,t2:TypeCode.Value): TypeCode.Value = Value(t1.id | t2.id)
+  def &(t1:TypeCode.Value,t2:TypeCode.Value): TypeCode.Value = Value(t1.id & t2.id)
 }

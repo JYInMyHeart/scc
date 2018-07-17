@@ -3,6 +3,9 @@ import Error._
 import SynTax.SynTaxState._
 import StoreClass._
 import TypeCode._
+import Parser.localSymStack
+
+import scala.collection.mutable.Stack
 
 class Parser(var syntaxState: SynTaxState,
              var syntaxLevel: Int,
@@ -257,7 +260,8 @@ class Parser(var syntaxState: SynTaxState,
 
 
   def externalDeclaration(l: StoreClass.Value): Unit = {
-    var btype:SccType = SccType(1,Symbol())
+    var btype:SccType = SccType(T_VOID,null)
+    var sym = Symbol
     if (typeSpecifier(btype) == 0)
       expect("<type>", lexer)
 
@@ -275,14 +279,37 @@ class Parser(var syntaxState: SynTaxState,
             case TK_BEGIN => {
               if (l == SC_LOCAL)
                 error("unsupported internal declaration", lexer)
-              funcBody()
+              if(&(tempType.t , T_BTYPE) != T_FUNC)
+                expect("func defined",lexer)
+              sym = symSearch(v)
+              sym match {
+                case x if (x & T_BTYPE) != T_FUNC =>
+                  error("%s redefined",getTkstr(v))
+                  sym.type = type
+                case _ =>
+                  sym = funcSymPush(v,tempType)
+              }
+              sym.r = SC_SYM | SC_GLOBAL
+              funcBody(sym)
               flag = false
             }
             case _ => {
-              if (lexer.token == TK_ASSIGN) {
-                lexer.getToken()
-                initializer()
+              if((tempType.t & T_BTYPE) != T_FUNC) {
+                if (symSearch(v) == null)
+                  sym = symPush(v, tempType, SC_GLOBAL | SC_SYM, 0)
+              }else{
+                r = 0
+                if(!(tempType.t & T_ARRAY))
+                  r |= SC_LVAL
+                r |= 1
+
+                if (lexer.token == TK_ASSIGN) {
+                  lexer.getToken()
+                  initializer(tempType)
+                }
+                sym = varSymPut(tempType,r,v,addr)
               }
+
               lexer.token match {
                 case TK_COMMA =>
                   lexer.getToken()
@@ -390,7 +417,8 @@ class Parser(var syntaxState: SynTaxState,
     fc
   }
 
-  def structMemberAlignment() = {
+  def structMemberAlignment():Int = {
+    var align = 1
     lexer.token match {
       case KW_ALIGN => {
         lexer.getToken()
@@ -402,9 +430,15 @@ class Parser(var syntaxState: SynTaxState,
             expect("need const variable", lexer)
         }
         skip(TK_CLOSEPA, lexer)
+        if(align != 1 && align != 2 && align != 4)
+          align = 1
+        align |= ALIGN_SET
+        align
       }
-      case _ =>
+      case _ => align
     }
+
+
   }
 
   def expression() = {
@@ -517,9 +551,7 @@ class Parser(var syntaxState: SynTaxState,
     lexer.getToken()
   }
 
-  def symDirectPush(localSymStack: Any, SC_ANOM: StoreClass.Value, SccType: SccType.type, i: Int) = ???
 
-  def symPop(localSymStack: Any, value: Null) = ???
 
   def funcBody(sym:Symbol) = {
     symDirectPush(localSymStack,SC_ANOM,SccType,0)
@@ -547,4 +579,34 @@ class Parser(var syntaxState: SynTaxState,
   }
 }
 
+object Parser{
+  var localSymStack = Stack[Symbol]()
+  var globalSymStack = Stack[Symbol]()
+
+  def symDirectPush(stack: Stack[Symbol], sc: StoreClass.Value, t: SccType, c: Int):Symbol = {
+    val symType = SccType(t.t,t.symbol)
+    val symbol = Symbol(sc,0,0,symType,null,null)
+    stack.push(symbol)
+    stack.top
+  }
+
+  def symPush(sc: StoreClass.Value,t:SccType,r:Int,c:Int): Unit ={
+
+    var stack = localSymStack.size match {
+      case 0 =>
+        localSymStack
+      case _ =>
+        globalSymStack
+    }
+    var ps = symDirectPush(stack,sc,t,c)
+    ps.r = r
+    if((&(sc)(SC_STRUCT).id != 0 ) || (sc < SC_ANOM)){
+
+    }
+
+  }
+
+  def symPop(localSymStack: Any, value: Null) = ???
+
+}
 
