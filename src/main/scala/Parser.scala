@@ -2,10 +2,6 @@ import Token._
 import Error._
 import SynTax.SynTaxState._
 import StoreClass._
-import TypeCode._
-import Parser.localSymStack
-
-import scala.collection.mutable.Stack
 
 class Parser(var syntaxState: SynTaxState,
              var syntaxLevel: Int,
@@ -36,21 +32,14 @@ class Parser(var syntaxState: SynTaxState,
     syntaxState = SNTX_NULL
   }
 
-  def symPush(value: TypeCode.Value, sccType: SccType, i: Int, i1: Int) = ???
-
-  def parameterTypeList(t:SccType, fc:Token.Value): Token.Value = {
+  def parameterTypeList(): Token.Value = {
     var funcCall: Token.Value = null
-    var sccType:SccType = SccType(lexer.token,Symbol())
-    var plast:Symbol = Symbol()
-    var first = Symbol()
     lexer.getToken()
     var flag = true
     while (lexer.token != TK_CLOSEPA && flag) {
-      if (typeSpecifier(sccType) == 0)
+      if (typeSpecifier() == 0)
         error("invalid identifier", lexer)
-      var tempToken = declarator(sccType,0)
-      var s = symPush(| (tempToken,SC_PARAMS),sccType,0,0)
-      //*plast = s;plast = &s -> next
+      declarator()
       if (lexer.token == TK_CLOSEPA)
         flag = false
       else {
@@ -70,16 +59,12 @@ class Parser(var syntaxState: SynTaxState,
       syntaxState = SNTX_NULL
     syntaxIndent()
     funcCall
-    val tempS = symPush(SC_ANOM,sccType,funcCall,0)
-    tempS.next = first
-    sccType.t = T_FUNC
-    sccType.symbol = tempS
   }
 
-  def directDeclaratorPostfix(t:SccType,fc:Token.Value): Unit = {
+  def directDeclaratorPostfix(): Unit = {
     lexer.token match {
       case TK_OPENPA =>
-        parameterTypeList(t,fc)
+        parameterTypeList()
       case TK_OPENBR =>
         lexer.getToken()
         lexer.token match {
@@ -89,33 +74,27 @@ class Parser(var syntaxState: SynTaxState,
           case _ =>
         }
         skip(TK_CLOSEBR, lexer)
-        directDeclaratorPostfix(t,fc)
-        val s = symPush(SC_ANOM,t,0,n)
-        t.t = | (T_ARRAY,T_PTR)
-        t.symbol = s
+        directDeclaratorPostfix()
       case _ =>
     }
   }
 
-  def directDeclarator(t:SccType,fc:Token.Value):Token.Value = {
-    var vt = lexer.token
+  def directDeclarator() = {
     lexer.token match {
       case x if x >= TK_IDENT =>
         lexer.getToken()
       case _ =>
         expect("identifier", lexer)
     }
-    directDeclaratorPostfix(t,fc)
-    vt
+    directDeclaratorPostfix()
   }
 
-  def declarator(t:SccType,forceAlign:Int) = {
+  def declarator() = {
     while (lexer.token == TK_STAR)
       lexer.getToken()
     var fc = functionCallingConvention()
-    if(forceAlign != 0)
-      structMemberAlignment(forceAlign)
-    directDeclarator(t,fc)
+    structMemberAlignment()
+    directDeclarator()
 
   }
 
@@ -250,66 +229,34 @@ class Parser(var syntaxState: SynTaxState,
     }
   }
 
-  def initializer(t:SccType) =
-    t match {
-      case x if &(x.t,T_ARRAY) =>
-        lexer.getToken()
-      case _ =>
-        assignmentExpression()
-    }
-
+  def initializer() = {
+    assignmentExpression()
+  }
 
   def externalDeclaration(l: StoreClass.Value): Unit = {
-    var btype:SccType = SccType(T_VOID,null)
-    var sym = Symbol
-    if (typeSpecifier(btype) == 0)
+    if (typeSpecifier() == 0)
       expect("<type>", lexer)
 
     lexer.token match {
-      case x if btype.t == T_STRUCT && x == TK_SEMICOLON =>
+      case TK_SEMICOLON =>
         syntaxState = SNTX_LF_HT
         lexer.getToken()
       case _ =>
         var flag = true
-        val tempType = btype
-        var v = lexer.token
         while (flag) {
-          v = declarator(tempType,null)
+          declarator()
           lexer.token match {
             case TK_BEGIN => {
               if (l == SC_LOCAL)
                 error("unsupported internal declaration", lexer)
-              if(&(tempType.t , T_BTYPE) != T_FUNC)
-                expect("func defined",lexer)
-              sym = symSearch(v)
-              sym match {
-                case x if (x & T_BTYPE) != T_FUNC =>
-                  error("%s redefined",getTkstr(v))
-                  sym.type = type
-                case _ =>
-                  sym = funcSymPush(v,tempType)
-              }
-              sym.r = SC_SYM | SC_GLOBAL
-              funcBody(sym)
+              funcBody()
               flag = false
             }
             case _ => {
-              if((tempType.t & T_BTYPE) != T_FUNC) {
-                if (symSearch(v) == null)
-                  sym = symPush(v, tempType, SC_GLOBAL | SC_SYM, 0)
-              }else{
-                r = 0
-                if(!(tempType.t & T_ARRAY))
-                  r |= SC_LVAL
-                r |= 1
-
-                if (lexer.token == TK_ASSIGN) {
-                  lexer.getToken()
-                  initializer(tempType)
-                }
-                sym = varSymPut(tempType,r,v,addr)
+              if (lexer.token == TK_ASSIGN) {
+                lexer.getToken()
+                initializer()
               }
-
               lexer.token match {
                 case TK_COMMA =>
                   lexer.getToken()
@@ -367,17 +314,14 @@ class Parser(var syntaxState: SynTaxState,
       structDeclarationList()
   }
 
-  def typeSpecifier(t:SccType) = {
-    var typeCode = T_VOID
+  def typeSpecifier() = {
     var typeFound = 0
     lexer.token match {
       case KW_CHAR =>
-        typeCode = T_CHAR
         typeFound = 1
         syntaxState = SNTX_SP
         lexer.getToken()
       case KW_SHORT =>
-        typeCode = T_SHORT
         typeFound = 1
         syntaxState = SNTX_SP
         lexer.getToken()
@@ -386,18 +330,15 @@ class Parser(var syntaxState: SynTaxState,
         syntaxState = SNTX_SP
         lexer.getToken()
       case KW_INT =>
-        typeCode = T_INT
         typeFound = 1
         syntaxState = SNTX_SP
         lexer.getToken()
       case KW_STRUCT =>
-        typeCode = T_STRUCT
         typeFound = 1
         syntaxState = SNTX_SP
         structSpecifier()
       case _ => error("error", lexer)
     }
-    t.t = typeCode
     typeFound
   }
 
@@ -417,8 +358,7 @@ class Parser(var syntaxState: SynTaxState,
     fc
   }
 
-  def structMemberAlignment():Int = {
-    var align = 1
+  def structMemberAlignment() = {
     lexer.token match {
       case KW_ALIGN => {
         lexer.getToken()
@@ -430,15 +370,9 @@ class Parser(var syntaxState: SynTaxState,
             expect("need const variable", lexer)
         }
         skip(TK_CLOSEPA, lexer)
-        if(align != 1 && align != 2 && align != 4)
-          align = 1
-        align |= ALIGN_SET
-        align
       }
-      case _ => align
+      case _ =>
     }
-
-
   }
 
   def expression() = {
@@ -534,7 +468,6 @@ class Parser(var syntaxState: SynTaxState,
   }
 
   def compoundStatement() = {
-    val s = localSymStack.stackGetTop()
     syntaxState = SNTX_LF_HT
     syntaxLevel += 1
     lexer.getToken()
@@ -547,16 +480,11 @@ class Parser(var syntaxState: SynTaxState,
       }
     }
     syntaxState = SNTX_LF_HT
-    symPop(localSymStack,s)
     lexer.getToken()
   }
 
-
-
-  def funcBody(sym:Symbol) = {
-    symDirectPush(localSymStack,SC_ANOM,SccType,0)
-    compoundStatement(null,null)
-    symPop(localSymStack,null)
+  def funcBody() = {
+    compoundStatement()
   }
 
   def statement(): Unit = {
@@ -579,34 +507,4 @@ class Parser(var syntaxState: SynTaxState,
   }
 }
 
-object Parser{
-  var localSymStack = Stack[Symbol]()
-  var globalSymStack = Stack[Symbol]()
-
-  def symDirectPush(stack: Stack[Symbol], sc: StoreClass.Value, t: SccType, c: Int):Symbol = {
-    val symType = SccType(t.t,t.symbol)
-    val symbol = Symbol(sc,0,0,symType,null,null)
-    stack.push(symbol)
-    stack.top
-  }
-
-  def symPush(sc: StoreClass.Value,t:SccType,r:Int,c:Int): Unit ={
-
-    var stack = localSymStack.size match {
-      case 0 =>
-        localSymStack
-      case _ =>
-        globalSymStack
-    }
-    var ps = symDirectPush(stack,sc,t,c)
-    ps.r = r
-    if((&(sc)(SC_STRUCT).id != 0 ) || (sc < SC_ANOM)){
-
-    }
-
-  }
-
-  def symPop(localSymStack: Any, value: Null) = ???
-
-}
 

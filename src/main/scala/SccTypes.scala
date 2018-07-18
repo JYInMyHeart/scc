@@ -1,5 +1,5 @@
 class SccTypes
-case class Symbol(var v:StoreClass.Value,
+case class Symbol(var v:Int,
                   var r:Int,
                   var c:Int,
                   var sccType: SccType,
