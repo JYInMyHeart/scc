@@ -9,6 +9,7 @@ class Parser(var syntaxState: SynTaxState,
 
 
   implicit val p = this
+
   def printTab(syntaxLevel: Int) = {
     for (i <- 0 until syntaxLevel)
       print("\t")
@@ -32,19 +33,26 @@ class Parser(var syntaxState: SynTaxState,
     syntaxState = SNTX_NULL
   }
 
-  def parameterTypeList(): Token.Value = {
+  def parameterTypeList(): ParameterTypeList = {
     var funcCall: Token.Value = null
+    var comma:Token.Value = null
+    var ellopsis:Token.Value = null
+    var declarators:List[Declarator] = List()
+    var typeSpecifiers:List[Token.Value] = List()
     lexer.getToken()
     var flag = true
     while (lexer.token != TK_CLOSEPA && flag) {
+      typeSpecifiers = typeSpecifiers :+ lexer.token
       if (typeSpecifier() == 0)
         error("invalid identifier", lexer)
-      declarator()
+      declarators = declarators :+ declarator()
       if (lexer.token == TK_CLOSEPA)
         flag = false
       else {
         skip(TK_COMMA, lexer)
+        comma = TK_COMMA
         if (lexer.token == TK_ELLIPSIS) {
+          ellopsis = TK_ELLIPSIS
           funcCall = KW_CDECL
           lexer.getToken()
           flag = false
@@ -59,41 +67,82 @@ class Parser(var syntaxState: SynTaxState,
       syntaxState = SNTX_NULL
     syntaxIndent()
     funcCall
+    var parameterDecl:ParameterDecl = null
+    val declarator1 = declarators.head
+    val typeSpecifier1 = typeSpecifiers.head
+    val parameterDeclaration = ParameterDeclaration(TypeSpecifier(typeSpecifier1)())(declarator1)
+    var parameterList:ParameterList = null
+    if(comma != null){
+      var decls = for(d <- declarators.drop(0);t <- typeSpecifiers.drop(0)) yield {
+        ParameterDecl(comma,ParameterDeclaration(TypeSpecifier(t)())(d))
+      }
+      parameterList = ParameterList(parameterDeclaration,decls)
+    }
+    ParameterTypeList(parameterList)(comma)(ellopsis)
   }
 
-  def directDeclaratorPostfix(): Unit = {
+  def directDeclaratorPostfix(): DirectDeclaratorPostfix = {
+    var open: Token.Value = null
+    var close: Token.Value = null
+    var cint: Token.Value = null
+    var parameterTypeLists:ParameterTypeList = null
     lexer.token match {
       case TK_OPENPA =>
-        parameterTypeList()
+        open = TK_OPENPA
+        parameterTypeLists = parameterTypeList()
       case TK_OPENBR =>
+        open = TK_OPENBR
         lexer.getToken()
         lexer.token match {
           case TK_CINT =>
+            cint = TK_CINT
             lexer.getToken()
           //            n = tkvalue
           case _ =>
         }
         skip(TK_CLOSEBR, lexer)
+        close = TK_CLOSEBR
         directDeclaratorPostfix()
       case _ =>
     }
+    var br: Br = null
+    var pa: Pa = null
+    open match {
+      case TK_OPENPA =>
+        pa = Pa(open)(parameterTypeLists)(close)
+      case TK_OPENBR =>
+        br = Br(open)(cint)(close)
+      case _ =>
+        error("nedd directDeclaratorPostfix", lexer)
+    }
+    if (br == null)
+      DirectDeclaratorPostfix(br)()
+    else
+      DirectDeclaratorPostfix()(pa)
   }
 
   def directDeclarator() = {
+    var ident: Token.Value = null
     lexer.token match {
       case x if x >= TK_IDENT =>
+        ident = TK_IDENT
         lexer.getToken()
       case _ =>
         expect("identifier", lexer)
     }
-    directDeclaratorPostfix()
+    val directDeclaratorPostfixs = directDeclaratorPostfix()
+    DirectDeclarator(ident, directDeclaratorPostfixs)
   }
 
   def declarator() = {
-    while (lexer.token == TK_STAR)
+    var star: Token.Value = null
+    while (lexer.token == TK_STAR) {
+      star = TK_STAR
       lexer.getToken()
+    }
     var fc = functionCallingConvention()
-    structMemberAlignment()
+    val functionCallingConventions = FunctionCallingConvention(fc)
+    val structMemberAlignments = structMemberAlignment()
     directDeclarator()
 
   }
@@ -233,13 +282,16 @@ class Parser(var syntaxState: SynTaxState,
     assignmentExpression()
   }
 
-  def externalDeclaration(l: StoreClass.Value): Unit = {
+  def externalDeclaration(l: StoreClass.Value): ExternDeclaration = {
+    val typeSpecifiers = TypeSpecifier(lexer.token)()
+    var semicolon: Token.Value = null
     if (typeSpecifier() == 0)
       expect("<type>", lexer)
 
     lexer.token match {
       case TK_SEMICOLON =>
         syntaxState = SNTX_LF_HT
+        semicolon = lexer.token
         lexer.getToken()
       case _ =>
         var flag = true
@@ -269,6 +321,7 @@ class Parser(var syntaxState: SynTaxState,
           }
         }
     }
+    ExternDeclaration(typeSpecifiers)()()()
   }
 
   def structDeclaration(): Unit = {
@@ -343,9 +396,12 @@ class Parser(var syntaxState: SynTaxState,
   }
 
   def translationUnit() = {
+    var list:List[ExternDeclaration] = List()
     while (lexer.token != TK_EOF) {
-      externalDeclaration(SC_GLOBAL)
+      val externDeclaration = externalDeclaration(SC_GLOBAL)
+      list = list :+ externDeclaration
     }
+    list
   }
 
   def functionCallingConvention() = {
@@ -359,20 +415,29 @@ class Parser(var syntaxState: SynTaxState,
   }
 
   def structMemberAlignment() = {
+    var align: Token.Value = null
+    var openpa: Token.Value = null
+    var cint: Token.Value = null
+    var closepa: Token.Value = null
     lexer.token match {
       case KW_ALIGN => {
+        align = KW_ALIGN
         lexer.getToken()
+        openpa = TK_OPENPA
         skip(TK_OPENPA, lexer)
         lexer.token match {
           case TK_CINT =>
+            cint = TK_CINT
             lexer.getToken()
           case _ =>
             expect("need const variable", lexer)
         }
         skip(TK_CLOSEPA, lexer)
+        closepa = TK_CLOSEPA
       }
       case _ =>
     }
+    StructMemberAlignment(align, openpa, cint, closepa)
   }
 
   def expression() = {
@@ -475,7 +540,7 @@ class Parser(var syntaxState: SynTaxState,
     while (lexer.token != TK_END) {
       if (isTypeSpecifier(lexer.token))
         externalDeclaration(SC_LOCAL)
-      else{
+      else {
         statement()
       }
     }
