@@ -9,8 +9,9 @@ object Main {
     val lexer = new Lexer(token = TK_MOD, 1, ' ', fin, 0, fileName)
     implicit val p = new Parser(SynTax.SynTaxState.SNTX_NULL,0,lexer)
     lexer.getToken()
-    p.translationUnit()
+    val t = p.translationUnit()
     println()
     println(s"lineCount= ${lexer.lineNum}")
+    println(t)
   }
 }
