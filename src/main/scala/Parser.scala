@@ -2,6 +2,7 @@ import Token._
 import Error._
 import SynTax.SynTaxState._
 import StoreClass._
+import scala.collection.mutable.Stack
 
 class Parser(var syntaxState: SynTaxState,
              var syntaxLevel: Int,
@@ -634,8 +635,9 @@ class Parser(var syntaxState: SynTaxState,
     lexer.getToken()
 
     while (lexer.token != TK_END) {
-      if (isTypeSpecifier(lexer.token))
+      if (isTypeSpecifier(lexer.token)){
         internDeclarations = internDeclarations :+ externalDeclaration(SC_LOCAL)
+      }
       else {
         statements = statements :+ statement()
       }
@@ -676,6 +678,11 @@ class Parser(var syntaxState: SynTaxState,
     }
     Statement(cs)(is)(rs)(bs)(cos)(fs)(es)
   }
+}
+
+object Parser{
+  var globalStack:Stack[Symbol] = Stack()
+
 }
 
 

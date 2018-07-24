@@ -1,14 +1,13 @@
+import scala.collection.mutable
+
 class SccTypes
-case class Symbol(var v:Int,
-                  var r:Int,
-                  var c:Int,
-                  var sccType: SccType,
-                  var next:Symbol,
-                  var prevTok:Symbol){
+case class Symbol(var name:String,
+                  var parentScope:mutable.Stack[Symbol],
+                  var t:TypeCode.Value,
+                  var next:Symbol){
 
 }
-case class SccType(var t:TypeCode.Value,
-                   var symbol: Symbol)
+
 object TypeCode extends Enumeration{
   val T_INT = Value(0)
   val T_CHAR = Value(1)
