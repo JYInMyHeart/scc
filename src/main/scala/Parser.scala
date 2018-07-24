@@ -151,7 +151,9 @@ class Parser(var syntaxState: SynTaxState,
 
   def primaryExpression() = {
     val token = lexer.token
-    var expressions: Expression = null
+    var openpa:Token.Value = null
+    var expressions:Expression = null
+    var closepa:Token.Value = null
     lexer.token match {
       case TK_CINT =>
         lexer.getToken()
@@ -160,16 +162,18 @@ class Parser(var syntaxState: SynTaxState,
       case TK_CSTR =>
         lexer.getToken()
       case TK_OPENPA =>
+        openpa = TK_OPENPA
         lexer.getToken()
         expressions = expression()
         skip(TK_CLOSEPA, lexer)
+        closepa = TK_CLOSEPA
       case _ =>
         val t = lexer.token
         lexer.getToken()
         if (t < TK_IDENT)
           expect("const characters", lexer)
     }
-    PrimaryExpression(token)(PaExpression(TK_OPENPA)(expressions)(TK_CLOSEPA))
+    PrimaryExpression(token)(PaExpression(openpa)(expressions)(closepa))
   }
 
   def argumentExpressionList(): PaArgueExpression = {
@@ -193,7 +197,7 @@ class Parser(var syntaxState: SynTaxState,
       yield MoreArguement(c, a)
 
     PaArgueExpression(TK_OPENPA)(
-      ArguementExpressionList(assignmentExpressions.head)(moreArguement: _*))(TK_CLOSEPA)
+      ArguementExpressionList(assignmentExpressions.head)(moreArguement:_*))(TK_CLOSEPA)
   }
 
   def postfixExpression() = {
@@ -229,14 +233,16 @@ class Parser(var syntaxState: SynTaxState,
   }
 
   def sizeofExpression() = {
+    val sizeof = Token.KW_SIZEOF
     lexer.getToken()
     skip(TK_OPENPA, lexer)
-    val typeSpecifiers = typeSpecifier()
+    val typeSpecifiers = TypeSpecifier(lexer.token)()
+    typeSpecifier()
     skip(TK_CLOSEPA, lexer)
-    SizeofExpression(KW_SIZEOF,TK_OPENPA,typeSpecifiers,TK_CLOSEPA)
+    SizeofExpression(sizeof,TK_OPENPA,typeSpecifiers,TK_CLOSEPA)
   }
 
-  def unaryExpression() = {
+  def unaryExpression(): UnaryExpression = {
     var op: Token.Value = lexer.token
     var unaryExpressions: UnaryExpression = null
     var postfixExpressions: PostfixExpression = null
@@ -264,7 +270,7 @@ class Parser(var syntaxState: SynTaxState,
   }
 
   def multiplicativeExpression() = {
-    var op: Token.Value
+    var op: Token.Value = null
     var nextUnaryExpression: UnaryExpression = null
     val unaryExpressions = unaryExpression()
     while (lexer.token == TK_STAR || lexer.token == TK_DIVIDE || lexer.token == TK_MOD) {
@@ -324,18 +330,17 @@ class Parser(var syntaxState: SynTaxState,
   }
 
   def initializer() = {
-    assignmentExpression()
+    Initializer(assignmentExpression())
   }
 
   def externalDeclaration(l: StoreClass.Value): ExternDeclaration = {
-    val typeSpecifiers = TypeSpecifier(lexer.token)()
-    var declarators: Declarator = null
+    val typeSpecifiers = typeSpecifier()
+    var declarators: List[Declarator] = null
     var semicolon: Token.Value = null
     var comma: Token.Value = null
-
-    if (typeSpecifier() == 0)
-      expect("<type>", lexer)
-
+    var assign:Token.Value = null
+    var funcbodys:List[Funcbody] = null
+    var initializers:List[Initializer] = null
     lexer.token match {
       case TK_SEMICOLON =>
         syntaxState = SNTX_LF_HT
@@ -344,18 +349,19 @@ class Parser(var syntaxState: SynTaxState,
       case _ =>
         var flag = true
         while (flag) {
-          declarators = declarator()
+          declarators = declarators :+ declarator()
           lexer.token match {
             case TK_BEGIN => {
               if (l == SC_LOCAL)
                 error("unsupported internal declaration", lexer)
-              funcBody()
+              funcbodys = funcbodys :+ funcBody()
               flag = false
             }
             case _ => {
               if (lexer.token == TK_ASSIGN) {
+                assign = TK_ASSIGN
                 lexer.getToken()
-                initializer()
+                initializers = initializers :+ initializer()
               }
               lexer.token match {
                 case TK_COMMA =>
@@ -370,6 +376,7 @@ class Parser(var syntaxState: SynTaxState,
           }
         }
     }
+    AssignExpr(assign,)
     ExternDeclaration(typeSpecifiers)(semicolon)()(declarators)
   }
 
@@ -425,28 +432,23 @@ class Parser(var syntaxState: SynTaxState,
     var typeFound = 0
     lexer.token match {
       case KW_CHAR =>
-        typeFound = 1
         syntaxState = SNTX_SP
         lexer.getToken()
       case KW_SHORT =>
-        typeFound = 1
         syntaxState = SNTX_SP
         lexer.getToken()
       case KW_VOID =>
-        typeFound = 1
         syntaxState = SNTX_SP
         lexer.getToken()
       case KW_INT =>
-        typeFound = 1
         syntaxState = SNTX_SP
         lexer.getToken()
       case KW_STRUCT =>
-        typeFound = 1
         syntaxState = SNTX_SP
-        struct = structSpecifier()
-      case _ => error("error", lexer)
+        structSpecifiers = structSpecifier()
+      case _ => error("error need <type>", lexer)
     }
-    TypeSpecifier(t)(struct)
+    TypeSpecifier(token)(structSpecifiers)
   }
 
   def translationUnit() = {
@@ -495,14 +497,14 @@ class Parser(var syntaxState: SynTaxState,
   }
 
   def expression() = {
-    var commas: List[Token.Value] = List()
-    var assignExpr: List[AssignmentExpression] = List()
+    var commas:List[Token.Value] = List()
+    var assignExpr:List[AssignmentExpression] = List()
     var flag = true
     while (flag) {
       assignExpr = assignExpr :+ assignmentExpression()
       if (lexer.token != TK_COMMA)
         flag = false
-      else {
+      else{
         commas = commas :+ TK_COMMA
         lexer.getToken()
       }
@@ -591,6 +593,9 @@ class Parser(var syntaxState: SynTaxState,
   }
 
   def compoundStatement() = {
+    val begin = TK_BEGIN
+    val internDeclaration:List[ExternDeclaration] = List()
+    var statements:List[Statement] = List()
     syntaxState = SNTX_LF_HT
     syntaxLevel += 1
     lexer.getToken()
@@ -607,7 +612,7 @@ class Parser(var syntaxState: SynTaxState,
   }
 
   def funcBody() = {
-    compoundStatement()
+    Funcbody(compoundStatement())
   }
 
   def statement(): Unit = {

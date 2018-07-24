@@ -94,7 +94,7 @@ case class Funcbody(compoundStatement: CompoundStatement)
 case class Initializer(assignmentExpression: AssignmentExpression)
 
 case class CompoundStatement(begin: Token.Value)
-                            (declaration: Declaration*)
+                            (internDeclaration: ExternDeclaration*)
                             (statement: Statement*)
                             (end: Token.Value)
 
