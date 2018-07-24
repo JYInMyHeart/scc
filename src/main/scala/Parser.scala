@@ -150,6 +150,8 @@ class Parser(var syntaxState: SynTaxState,
   }
 
   def primaryExpression() = {
+    val token = lexer.token
+    var expressions: Expression = null
     lexer.token match {
       case TK_CINT =>
         lexer.getToken()
@@ -159,7 +161,7 @@ class Parser(var syntaxState: SynTaxState,
         lexer.getToken()
       case TK_OPENPA =>
         lexer.getToken()
-        expression()
+        expressions = expression()
         skip(TK_CLOSEPA, lexer)
       case _ =>
         val t = lexer.token
@@ -167,6 +169,7 @@ class Parser(var syntaxState: SynTaxState,
         if (t < TK_IDENT)
           expect("const characters", lexer)
     }
+    PrimaryExpression(token)(PaExpression(TK_OPENPA)(expressions)(TK_CLOSEPA))
   }
 
   def argumentExpressionList(): PaArgueExpression = {
@@ -190,7 +193,7 @@ class Parser(var syntaxState: SynTaxState,
       yield MoreArguement(c, a)
 
     PaArgueExpression(TK_OPENPA)(
-      ArguementExpressionList(assignmentExpressions.head)(moreArguement:_*))(TK_CLOSEPA)
+      ArguementExpressionList(assignmentExpressions.head)(moreArguement: _*))(TK_CLOSEPA)
   }
 
   def postfixExpression() = {
@@ -228,8 +231,9 @@ class Parser(var syntaxState: SynTaxState,
   def sizeofExpression() = {
     lexer.getToken()
     skip(TK_OPENPA, lexer)
-    typeSpecifier()
+    val typeSpecifiers = typeSpecifier()
     skip(TK_CLOSEPA, lexer)
+    SizeofExpression(KW_SIZEOF,TK_OPENPA,typeSpecifiers,TK_CLOSEPA)
   }
 
   def unaryExpression() = {
@@ -393,6 +397,8 @@ class Parser(var syntaxState: SynTaxState,
   }
 
   def structSpecifier() = {
+    val struct = KW_STRUCT
+    var structDeclarations
     lexer.getToken()
     var v = lexer.token
     syntaxState = SNTX_DELAY
@@ -409,10 +415,13 @@ class Parser(var syntaxState: SynTaxState,
     if (v < TK_IDENT)
       expect("struct name", lexer)
     if (lexer.token == TK_BEGIN)
-      structDeclarationList()
+      structDeclarations = structDeclarationList()
+    StructSpecifier(struct)(v)(structDeclarations)
   }
 
   def typeSpecifier() = {
+    val t = lexer.token
+    var struct:StructSpecifier = null
     var typeFound = 0
     lexer.token match {
       case KW_CHAR =>
@@ -434,10 +443,10 @@ class Parser(var syntaxState: SynTaxState,
       case KW_STRUCT =>
         typeFound = 1
         syntaxState = SNTX_SP
-        structSpecifier()
+        struct = structSpecifier()
       case _ => error("error", lexer)
     }
-    typeFound
+    TypeSpecifier(t)(struct)
   }
 
   def translationUnit() = {
@@ -486,21 +495,21 @@ class Parser(var syntaxState: SynTaxState,
   }
 
   def expression() = {
-    var commas:List[Token.Value] = List()
-    var assignExpr:List[AssignmentExpression] = List()
+    var commas: List[Token.Value] = List()
+    var assignExpr: List[AssignmentExpression] = List()
     var flag = true
     while (flag) {
       assignExpr = assignExpr :+ assignmentExpression()
       if (lexer.token != TK_COMMA)
         flag = false
-      else{
+      else {
         commas = commas :+ TK_COMMA
         lexer.getToken()
       }
     }
-    val arguements = for(c <- commas;p <- assignExpr.drop(0))
-      yield MoreArguement(c,p)
-    Expression(assignExpr.head)(arguements:_*)
+    val arguements = for (c <- commas; p <- assignExpr.drop(0))
+      yield MoreArguement(c, p)
+    Expression(assignExpr.head)(arguements: _*)
   }
 
   def ifStatement() = {
