@@ -4,6 +4,7 @@ class SccTypes
 case class Symbol(var name:String,
                   var parentScope:mutable.Stack[Symbol],
                   var t:TypeCode.Value,
+                  var loc:Int,
                   var next:Symbol){
 
 }

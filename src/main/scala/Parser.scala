@@ -71,15 +71,15 @@ class Parser(var syntaxState: SynTaxState,
       declarators.head
     } else null
     val typeSpecifier1 = if (typeSpecifiers.size > 0) typeSpecifiers.head else null
-    val parameterDeclaration = ParameterDeclaration(typeSpecifier1)(declarator1)
+    val parameterDeclaration = ParameterDeclaration(typeSpecifier1,declarator1)
     var parameterList: ParameterList = null
     if (comma != null) {
       var decls = for (d <- declarators.drop(0); t <- typeSpecifiers.drop(0)) yield {
-        ParameterDecl(comma, ParameterDeclaration(t)(d))
+        ParameterDecl(comma, ParameterDeclaration(t,d))
       }
-      parameterList = ParameterList(parameterDeclaration)(decls: _*)
+      parameterList = ParameterList(parameterDeclaration,decls: _*)
     }
-    ParameterTypeList(parameterList)(comma)(ellopsis)
+    ParameterTypeList(parameterList,comma,ellopsis)
   }
 
   def directDeclaratorPostfix(): DirectDeclaratorPostfix = {
@@ -110,16 +110,13 @@ class Parser(var syntaxState: SynTaxState,
     var pa: Pa = null
     open match {
       case TK_OPENPA =>
-        pa = Pa(open)(parameterTypeLists)(close)
+        pa = Pa(open,parameterTypeLists,close)
       case TK_OPENBR =>
-        br = Br(open)(cint)(close)
+        br = Br(open,cint,close)
       case _ =>
       //        error("nedd directDeclaratorPostfix", lexer)
     }
-    if (br != null)
-      DirectDeclaratorPostfix(br)()
-    else
-      DirectDeclaratorPostfix()(pa)
+    DirectDeclaratorPostfix(br,pa)
   }
 
   def directDeclarator() = {
@@ -145,14 +142,14 @@ class Parser(var syntaxState: SynTaxState,
     val functionCallingConventions = FunctionCallingConvention(fc)
     val structMemberAlignments = structMemberAlignment()
     val directDeclarators = directDeclarator()
-    Declarator(star)(functionCallingConventions)(structMemberAlignments)(directDeclarators)
+    Declarator(star,functionCallingConventions,structMemberAlignments,directDeclarators)
   }
 
   def primaryExpression() = {
     val token = lexer.token
-    var openpa:Token.Value = null
-    var expressions:Expression = null
-    var closepa:Token.Value = null
+    var openpa: Token.Value = null
+    var expressions: Expression = null
+    var closepa: Token.Value = null
     lexer.token match {
       case TK_CINT =>
         lexer.getToken()
@@ -172,7 +169,7 @@ class Parser(var syntaxState: SynTaxState,
         if (t < TK_IDENT)
           expect("const characters", lexer)
     }
-    PrimaryExpression(token)(PaExpression(openpa)(expressions)(closepa))
+    PrimaryExpression(token,PaExpression(openpa,expressions,closepa))
   }
 
   def argumentExpressionList(): PaArgueExpression = {
@@ -195,8 +192,8 @@ class Parser(var syntaxState: SynTaxState,
     val moreArguement = for (c <- commas; a <- assignmentExpressions.drop(0))
       yield MoreArguement(c, a)
 
-    PaArgueExpression(TK_OPENPA)(
-      ArguementExpressionList(assignmentExpressions.head)(moreArguement:_*))(TK_CLOSEPA)
+    PaArgueExpression(TK_OPENPA,
+      ArguementExpressionList(assignmentExpressions.head,moreArguement),TK_CLOSEPA)
   }
 
   def postfixExpression() = {
@@ -221,24 +218,24 @@ class Parser(var syntaxState: SynTaxState,
           lexer.getToken()
           val expressions = expression()
           skip(TK_CLOSEBR, lexer)
-          brExpressions = BrExpression(TK_OPENBR)(expressions)(TK_CLOSEBR)
+          brExpressions = BrExpression(TK_OPENBR,expressions,TK_CLOSEBR)
         case TK_OPENPA =>
           paExpression = argumentExpressionList()
         case _ =>
           flag = false
       }
     }
-    PostfixExpression(primaryExpressions)(brExpressions)(paExpression)(dotExpression)(pointstoExpression)
+    PostfixExpression(primaryExpressions,brExpressions,paExpression,dotExpression,pointstoExpression)
   }
 
   def sizeofExpression() = {
     val sizeof = Token.KW_SIZEOF
     lexer.getToken()
     skip(TK_OPENPA, lexer)
-    val typeSpecifiers = TypeSpecifier(lexer.token)()
+    val typeSpecifiers = TypeSpecifier(lexer.token,null)
     typeSpecifier()
     skip(TK_CLOSEPA, lexer)
-    SizeofExpression(sizeof,TK_OPENPA,typeSpecifiers,TK_CLOSEPA)
+    SizeofExpression(sizeof, TK_OPENPA, typeSpecifiers, TK_CLOSEPA)
   }
 
   def unaryExpression(): UnaryExpression = {
@@ -265,7 +262,7 @@ class Parser(var syntaxState: SynTaxState,
       case _ =>
         postfixExpressions = postfixExpression()
     }
-    UnaryExpression(op)(unaryExpressions)(postfixExpressions)(sizeofExpressions)
+    UnaryExpression(op,unaryExpressions,postfixExpressions,sizeofExpressions)
   }
 
   def multiplicativeExpression() = {
@@ -276,7 +273,7 @@ class Parser(var syntaxState: SynTaxState,
       lexer.getToken()
       nextUnaryExpression = unaryExpression()
     }
-    MultplicativeExpression(unaryExpressions)(op)(nextUnaryExpression)
+    MultplicativeExpression(unaryExpressions,op,nextUnaryExpression)
   }
 
   def additiveExpression() = {
@@ -288,7 +285,7 @@ class Parser(var syntaxState: SynTaxState,
       lexer.getToken()
       nextMultiplicativeExpression = multiplicativeExpression()
     }
-    AdditiveExpression(multplicativeExpressions)(op)(nextMultiplicativeExpression)
+    AdditiveExpression(multplicativeExpressions,op,nextMultiplicativeExpression)
   }
 
   def relationalExpression() = {
@@ -301,7 +298,7 @@ class Parser(var syntaxState: SynTaxState,
       lexer.getToken()
       nextAdditiveExpression = additiveExpression()
     }
-    RelationExpression(additiveExpressions)(token)(nextAdditiveExpression)
+    RelationExpression(additiveExpressions,token,nextAdditiveExpression)
   }
 
   def equalityExpression() = {
@@ -313,7 +310,7 @@ class Parser(var syntaxState: SynTaxState,
       lexer.getToken()
       nextRelationExpression = relationalExpression()
     }
-    EqualityExpression(relationExpressions)(eq)(nextRelationExpression)
+    EqualityExpression(relationExpressions,eq,nextRelationExpression)
   }
 
   def assignmentExpression(): AssignmentExpression = {
@@ -325,7 +322,7 @@ class Parser(var syntaxState: SynTaxState,
       lexer.getToken()
       nextAssignmentExpr = assignmentExpression()
     }
-    AssignmentExpression(equalityExpressions)(assign)(nextAssignmentExpr)
+    AssignmentExpression(equalityExpressions,assign,nextAssignmentExpr)
   }
 
   def initializer() = {
@@ -337,9 +334,9 @@ class Parser(var syntaxState: SynTaxState,
     var declarators: List[Declarator] = List()
     var semicolon: Token.Value = null
     var comma: Token.Value = null
-    var assign:Token.Value = null
-    var funcbodys:List[Funcbody] = List()
-    var initializers:List[Initializer] = List()
+    var assign: Token.Value = null
+    var funcbodys: List[Funcbody] = List()
+    var initializers: List[Initializer] = List()
     lexer.token match {
       case TK_SEMICOLON =>
         syntaxState = SNTX_LF_HT
@@ -375,55 +372,56 @@ class Parser(var syntaxState: SynTaxState,
           }
         }
     }
-    val assignExprs = for(i <- initializers.drop(0);d <- declarators.drop(0))
-      yield InitDeclarator(TK_COMMA)(d,AssignExpr(assign,i))
-    var idhead:InitDeclarator = null
-    if(declarators.size > 0 && initializers.size > 0)
-      idhead = InitDeclarator()(declarators.head,AssignExpr(TK_ASSIGN,initializers.head))
-    val funcEpxrs = for(d <- declarators.drop(0);f <- funcbodys.drop(0))
-      yield FunctionDefinition(d,f)
-    var dfhead:FunctionDefinition = null
-    if(declarators.size > 0 && funcbodys.size > 0)
-      dfhead = FunctionDefinition(declarators.head,funcbodys.head)
-    ExternDeclaration(typeSpecifiers)(semicolon)(dfhead +: funcEpxrs:_*)(idhead +: assignExprs:_*)
+    val assignExprs = for (i <- initializers.drop(0); d <- declarators.drop(0))
+      yield InitDeclarator(TK_COMMA,d, AssignExpr(assign, i))
+    var idhead: InitDeclarator = null
+    if (declarators.size > 0 && initializers.size > 0)
+      idhead = InitDeclarator(null,declarators.head, AssignExpr(TK_ASSIGN, initializers.head))
+    val funcEpxrs = for (d <- declarators.drop(0); f <- funcbodys.drop(0))
+      yield FunctionDefinition(d, f)
+    var dfhead: FunctionDefinition = null
+    if (declarators.size > 0 && funcbodys.size > 0)
+      dfhead = FunctionDefinition(declarators.head, funcbodys.head)
+    ExternDeclaration(typeSpecifiers,semicolon,dfhead +: funcEpxrs,idhead +: assignExprs)
+
   }
 
   def structDeclaration() = {
     val t = typeSpecifier()
-    var commas:List[Token.Value] = List()
-    var declarators:List[Declarator] = List()
+    var commas: List[Token.Value] = List()
+    var declarators: List[Declarator] = List()
     var flag = true
     while (flag) {
       declarators = declarators :+ declarator()
       if (lexer.token == TK_SEMICOLON)
         flag = false
-      else{
+      else {
         skip(TK_COMMA, lexer)
         commas = commas :+ TK_COMMA
       }
     }
     syntaxState = SNTX_LF_HT
     skip(TK_SEMICOLON, lexer)
-    val list:List[Decl] = List(Decl()(declarators.head))
-    val tempList =  for(c <- commas;d <- declarators.drop(0))
-      yield Decl(c)(d)
-    StructDeclaration(t)(list ++ tempList:_*)(TK_SEMICOLON)
+    val list: List[Decl] = List(Decl(null,declarators.head))
+    val tempList = for (c <- commas; d <- declarators.drop(0))
+      yield Decl(c,d)
+    StructDeclaration(t,list ++ tempList,TK_SEMICOLON)
   }
 
   def structDeclarationList() = {
-    var structDeclaratrions:StructDeclaration = null
+    var structDeclaratrions: StructDeclaration = null
     syntaxState = SNTX_LF_HT
     syntaxLevel += 1
     lexer.getToken()
     while (lexer.token != TK_END)
       structDeclaratrions = structDeclaration()
     skip(TK_END, lexer)
-    StructDecl(TK_BEGIN,structDeclaratrions,TK_END)
+    StructDecl(TK_BEGIN, structDeclaratrions, TK_END)
   }
 
   def structSpecifier() = {
     val struct = KW_STRUCT
-    var structDeclarations:StructDecl = null
+    var structDeclarations: StructDecl = null
     lexer.getToken()
     var v = lexer.token
     syntaxState = SNTX_DELAY
@@ -441,13 +439,13 @@ class Parser(var syntaxState: SynTaxState,
       expect("struct name", lexer)
     if (lexer.token == TK_BEGIN)
       structDeclarations = structDeclarationList()
-    StructSpecifier(struct,v,structDeclarations)
+    StructSpecifier(struct, v, structDeclarations)
   }
 
   def typeSpecifier(): TypeSpecifier = {
     val t = lexer.token
-    var struct:StructSpecifier = null
-    var structSpecifiers:StructSpecifier = null
+    var struct: StructSpecifier = null
+    var structSpecifiers: StructSpecifier = null
     var typeFound = 0
     lexer.token match {
       case KW_CHAR =>
@@ -467,7 +465,7 @@ class Parser(var syntaxState: SynTaxState,
         structSpecifiers = structSpecifier()
       case _ => error("error need <type>", lexer)
     }
-    TypeSpecifier(t)(structSpecifiers)
+    TypeSpecifier(t,structSpecifiers)
   }
 
   def translationUnit() = {
@@ -516,21 +514,21 @@ class Parser(var syntaxState: SynTaxState,
   }
 
   def expression() = {
-    var commas:List[Token.Value] = List()
-    var assignExpr:List[AssignmentExpression] = List()
+    var commas: List[Token.Value] = List()
+    var assignExpr: List[AssignmentExpression] = List()
     var flag = true
     while (flag) {
       assignExpr = assignExpr :+ assignmentExpression()
       if (lexer.token != TK_COMMA)
         flag = false
-      else{
+      else {
         commas = commas :+ TK_COMMA
         lexer.getToken()
       }
     }
     val arguements = for (c <- commas; p <- assignExpr.drop(0))
       yield MoreArguement(c, p)
-    Expression(assignExpr.head)(arguements: _*)
+    Expression(assignExpr.head,arguements: _*)
   }
 
   def ifStatement() = {
@@ -541,17 +539,17 @@ class Parser(var syntaxState: SynTaxState,
     syntaxState = SNTX_LF_HT
     skip(TK_CLOSEPA, lexer)
     val stmt = statement()
-    var elstmt:Statement = null
+    var elstmt: Statement = null
     if (lexer.token == KW_ELSE) {
       syntaxState = SNTX_LF_HT
       lexer.getToken()
       elstmt = statement()
     }
-    IfStatement(KW_IF,TK_OPENPA,expr,TK_CLOSEPA,stmt)(KW_ELSE)(elstmt)
+    IfStatement(KW_IF, TK_OPENPA, expr, TK_CLOSEPA, stmt,KW_ELSE,elstmt)
   }
 
   def returnStatement() = {
-    var expr:Expression = null
+    var expr: Expression = null
     syntaxState = SNTX_DELAY
     lexer.getToken()
     lexer.token match {
@@ -564,29 +562,29 @@ class Parser(var syntaxState: SynTaxState,
       expr = expression()
     syntaxState = SNTX_LF_HT
     skip(TK_SEMICOLON, lexer)
-    ReturnStatement(KW_RETURN)(expr)(TK_SEMICOLON)
+    ReturnStatement(KW_RETURN,expr,TK_SEMICOLON)
   }
 
   def breakStatement() = {
     lexer.getToken()
     syntaxState = SNTX_LF_HT
     skip(TK_SEMICOLON, lexer)
-    BreakStatement(KW_BREAK,TK_SEMICOLON)
+    BreakStatement(KW_BREAK, TK_SEMICOLON)
   }
 
   def continueStatement() = {
     lexer.getToken()
     syntaxState = SNTX_LF_HT
     skip(TK_SEMICOLON, lexer)
-    ContinueStatement(KW_CONTINUE,TK_SEMICOLON)
+    ContinueStatement(KW_CONTINUE, TK_SEMICOLON)
   }
 
   def forStatement() = {
     lexer.getToken()
     skip(TK_OPENPA, lexer)
-    var expr1:Expression = null
-    var expr2:Expression = null
-    var expr3:Expression = null
+    var expr1: Expression = null
+    var expr2: Expression = null
+    var expr3: Expression = null
     if (lexer.token != TK_SEMICOLON)
       expr1 = expression()
     skip(TK_SEMICOLON, lexer)
@@ -598,21 +596,21 @@ class Parser(var syntaxState: SynTaxState,
     syntaxState = SNTX_LF_HT
     skip(TK_CLOSEPA, lexer)
     val stmt = statement()
-    ForStatement(KW_FOR,TK_OPENPA,
-      ExpressionStatement(expr1)(TK_SEMICOLON),
-      ExpressionStatement(expr2)(TK_SEMICOLON),
-      expr3,TK_CLOSEPA,stmt)
+    ForStatement(KW_FOR, TK_OPENPA,
+      ExpressionStatement(expr1,TK_SEMICOLON),
+      ExpressionStatement(expr2,TK_SEMICOLON),
+      expr3, TK_CLOSEPA, stmt)
   }
 
   def expressionStatement() = {
-    var t:Expression = null
+    var t: Expression = null
     lexer.token match {
       case TK_SEMICOLON =>
       case _ => t = expression()
     }
     syntaxState = SNTX_LF_HT
     skip(TK_SEMICOLON, lexer)
-    ExpressionStatement(t)(TK_SEMICOLON)
+    ExpressionStatement(t,TK_SEMICOLON)
   }
 
   def isTypeSpecifier(token: Token): Boolean = {
@@ -628,14 +626,14 @@ class Parser(var syntaxState: SynTaxState,
 
   def compoundStatement(): CompoundStatement = {
     val begin = TK_BEGIN
-    var internDeclarations:List[ExternDeclaration] = List()
-    var statements:List[Statement] = List()
+    var internDeclarations: List[ExternDeclaration] = List()
+    var statements: List[Statement] = List()
     syntaxState = SNTX_LF_HT
     syntaxLevel += 1
     lexer.getToken()
 
     while (lexer.token != TK_END) {
-      if (isTypeSpecifier(lexer.token)){
+      if (isTypeSpecifier(lexer.token)) {
         internDeclarations = internDeclarations :+ externalDeclaration(SC_LOCAL)
       }
       else {
@@ -644,7 +642,7 @@ class Parser(var syntaxState: SynTaxState,
     }
     syntaxState = SNTX_LF_HT
     lexer.getToken()
-    CompoundStatement(begin)(internDeclarations:_*)(statements:_*)(TK_END)
+    CompoundStatement(begin,internDeclarations,statements,TK_END)
   }
 
   def funcBody() = {
@@ -653,13 +651,13 @@ class Parser(var syntaxState: SynTaxState,
 
   def statement(): Statement = {
     val token = lexer.token
-    var cs:CompoundStatement = null
-    var is:IfStatement = null
-    var rs:ReturnStatement = null
-    var bs:BreakStatement = null
-    var cos:ContinueStatement = null
-    var fs:ForStatement = null
-    var es:ExpressionStatement = null
+    var cs: CompoundStatement = null
+    var is: IfStatement = null
+    var rs: ReturnStatement = null
+    var bs: BreakStatement = null
+    var cos: ContinueStatement = null
+    var fs: ForStatement = null
+    var es: ExpressionStatement = null
     lexer.token match {
       case TK_BEGIN =>
         cs = compoundStatement()
@@ -676,12 +674,12 @@ class Parser(var syntaxState: SynTaxState,
       case _ =>
         es = expressionStatement()
     }
-    Statement(cs)(is)(rs)(bs)(cos)(fs)(es)
+    Statement(cs,is,rs,bs,cos,fs,es)
   }
 }
 
-object Parser{
-  var globalStack:Stack[Symbol] = Stack()
+object Parser {
+  var globalStack: Stack[Symbol] = Stack()
 
 }
 
