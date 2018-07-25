@@ -98,7 +98,6 @@ class Parser(var syntaxState: SynTaxState,
           case TK_CINT =>
             cint = TK_CINT
             lexer.getToken()
-          //            n = tkvalue
           case _ =>
         }
         skip(TK_CLOSEBR, lexer)
