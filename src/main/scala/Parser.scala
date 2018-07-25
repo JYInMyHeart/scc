@@ -270,6 +270,7 @@ class Parser(var syntaxState: SynTaxState,
     var nextUnaryExpression: UnaryExpression = null
     val unaryExpressions = unaryExpression()
     while (lexer.token == TK_STAR || lexer.token == TK_DIVIDE || lexer.token == TK_MOD) {
+      op = lexer.token
       lexer.getToken()
       nextUnaryExpression = unaryExpression()
     }
@@ -409,12 +410,12 @@ class Parser(var syntaxState: SynTaxState,
   }
 
   def structDeclarationList() = {
-    var structDeclaratrions: StructDeclaration = null
+    var structDeclaratrions: List[StructDeclaration] = List()
     syntaxState = SNTX_LF_HT
     syntaxLevel += 1
     lexer.getToken()
     while (lexer.token != TK_END)
-      structDeclaratrions = structDeclaration()
+      structDeclaratrions :+= structDeclaration()
     skip(TK_END, lexer)
     StructDecl(TK_BEGIN, structDeclaratrions, TK_END)
   }

@@ -58,7 +58,7 @@ case class StructSpecifier(kwStruct: Token.Value,
 }
 
 case class StructDecl(begin: Token.Value,
-                      structDeclaration: StructDeclaration,
+                      structDeclaration: List[StructDeclaration],
                       end: Token.Value) {
   override def toString: String = s"\n\t\tStructDecl:$begin,$structDeclaration,$end"
 }

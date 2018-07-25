@@ -231,7 +231,7 @@ class Lexer(var token: Token,
 
   def ungetC(c: Char) = {
     count = count - 1
-    fin.unread(1)
+    fin.unread(c)
   }
 
   def preprocess() = {

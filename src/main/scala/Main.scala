@@ -12,6 +12,6 @@ object Main {
     val t = p.translationUnit()
     println()
     println(s"lineCount= ${lexer.lineNum}")
-    println(t(1).functionDefinition.head.declarator )
+    println(t(1))
   }
 }
