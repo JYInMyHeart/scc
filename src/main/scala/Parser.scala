@@ -679,7 +679,7 @@ class Parser(var syntaxState: SynTaxState,
 }
 
 object Parser {
-  var globalStack: Stack[Symbol] = Stack()
+  var globalSope: Scope = Scope(Stack(),List())
 
 }
 

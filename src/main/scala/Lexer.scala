@@ -234,6 +234,16 @@ class Lexer(var token: Token,
     fin.unread(c)
   }
 
+  def parseSingleLineComment(): Unit = {
+    var flag = true
+    while(flag){
+      if (ch == '\n' || ch == '\r' || ch == EOF)
+        flag = false
+      else
+        getCh()
+    }
+  }
+
   def preprocess() = {
     var flag = true
     while (flag) {
@@ -243,7 +253,9 @@ class Lexer(var token: Token,
         getCh()
         if (ch == '*') {
           parseComment()
-        } else {
+        } else if(ch == '/'){
+          parseSingleLineComment()
+        }else {
           ungetC(ch)
           ch = '/'
           flag = false
