@@ -5,8 +5,8 @@ case class Symbol(var name:String,
                   var parentScope:Scope,
                   var t:TypeCode.Value,
                   var loc:Int,
-                  var next:Symbol,
-                  var currentScope:Scope){
+                  var next:Symbol){
+  override def toString: String = s"<$name $t $loc $next>"
 }
 case class Scope(var env:mutable.Stack[Symbol],
                  var scopes:List[Scope])

@@ -1,7 +1,8 @@
-import Token._
 import Error._
-import SynTax.SynTaxState._
 import StoreClass._
+import SynTax.SynTaxState._
+import Token._
+
 import scala.collection.mutable.Stack
 
 class Parser(var syntaxState: SynTaxState,
@@ -329,8 +330,32 @@ class Parser(var syntaxState: SynTaxState,
     Initializer(assignmentExpression())
   }
 
+//  def getTypeCode(typeSpecifiers: TypeSpecifier):TypeCode.Value = {
+//    typeSpecifiers.t match {
+//      case KW_CHAR =>
+//        T_CHAR
+//      case KW_SHORT =>
+//        T_SHORT
+//      case KW_VOID =>
+//        T_VOID
+//      case KW_INT =>
+//        T_INT
+//      case KW_STRUCT =>
+//        T_STRUCT
+//      case _ => T_FUNC
+//    }
+//  }
+
   def externalDeclaration(l: StoreClass.Value): ExternDeclaration = {
     val typeSpecifiers = typeSpecifier()
+//    val typeCode = getTypeCode(typeSpecifiers)
+//    if (l == SC_GLOBAL) {
+//      globalSope.env.push(Symbol(Lexer.tkWords.head._3, null, typeCode, lexer.lineNum, null))
+//    } else {
+//      var scope = Scope(Stack[Symbol](),List())
+//      scope.env.push(Symbol(Lexer.tkWords.head._3, globalSope, typeCode, lexer.lineNum, null))
+//      globalSope.scopes :+= scope
+//    }
     var declarators: List[Declarator] = List()
     var semicolon: Token.Value = null
     var comma: Token.Value = null

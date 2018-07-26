@@ -1,6 +1,6 @@
 case class Ast(translationUnit: TranslationUnit)
 
-case class TranslationUnit(externDeclaration: ExternDeclaration,
+case class TranslationUnit(externDeclaration: List[ExternDeclaration],
                            eof: Token.Value) {
   override def toString: String = s"TranslationUnit<$externDeclaration,$eof>"
 }
