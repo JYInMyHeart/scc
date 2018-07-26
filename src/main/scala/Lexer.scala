@@ -231,7 +231,17 @@ class Lexer(var token: Token,
 
   def ungetC(c: Char) = {
     count = count - 1
-    fin.unread(1)
+    fin.unread(c)
+  }
+
+  def parseSingleLineComment(): Unit = {
+    var flag = true
+    while(flag){
+      if (ch == '\n' || ch == '\r' || ch == EOF)
+        flag = false
+      else
+        getCh()
+    }
   }
 
   def preprocess() = {
@@ -243,7 +253,9 @@ class Lexer(var token: Token,
         getCh()
         if (ch == '*') {
           parseComment()
-        } else {
+        } else if(ch == '/'){
+          parseSingleLineComment()
+        }else {
           ungetC(ch)
           ch = '/'
           flag = false
@@ -376,10 +388,14 @@ object Lexer {
       s"${YELLOW}${BOLD}${i._3}${RESET}"
     } else if (i._2 <= TK_ELLIPSIS && i._2 > TK_AND) {
       s"${RED}${BOLD}${i._3}${RESET}"
-    } else if (i._2 <= KW_CHAR && i._2 >= TK_CINT) {
-      s"${GREEN}${BOLD}${i._3}${RESET}"
-    } else {
+    } else if (i._2 < TK_CSTR && i._2 >= TK_CINT) {
+      s"${WHITE}${BOLD}${i._3}${RESET}"
+    } else if(i._2 >= KW_CHAR && i._2 < TK_IDENT){
       s"${BLUE}${BOLD}${i._3}${RESET}"
+    } else if(i._2 == TK_CSTR){
+      s"${GREEN}${BOLD}${i._3}${RESET}"
+    }else {
+      s"${WHITE}${BOLD}${i._3}${RESET}"
     }
 
   }

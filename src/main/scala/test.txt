@@ -1,28 +1,28 @@
-int f(int x){
-    return x + 1;
-}
+
+struct point{
+    int x;
+    int y;
+};
+int f1(int y){return y % y;}
+
+
+
 void main(){
     int arr[10];
     int i;
-    int *ptr;
-    struct point *pp;
     struct point pt;
     pt.x = 1024;
     pt.y = 1248;
-    pp->x = 111;
-    pp->y = 112;
     for(i = 0;i < 10;i = i + 1){
         arr[i] = i;
-        arr[i] = arr[i] + 3;
         if(i == 6){
             continue;
         }else{
             printf("arr[%d]\n",arr[i]);
         }
-
+//abc
     }
-    int a = 2.34;
-    int b = f(1);
+    int a = 2.34;//sb
     printf("hello,world");
 }
 
