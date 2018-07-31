@@ -1,308 +1,294 @@
+class Node
+class ExprNode extends Node
+class StmtNode extends Node
+class TypeNode(name:String) extends Node
+class ForNode(init:StmtNode,
+              cond:ExprNode,
+              incr:StmtNode,
+              body:StmtNode) extends StmtNode
+class IfNode(cond:ExprNode,
+             thenBody:StmtNode,
+             elseBody:StmtNode) extends StmtNode
+class BreakNode extends StmtNode
+class ContinueNode extends StmtNode
+class ReturnNode extends StmtNode
+class BlockNode extends StmtNode
+class ExprStmtNode extends StmtNode
+class BinaryOpNode(op:String,
+                   left:ExprNode,
+                   right:ExprNode,
+                   t:TypeCode.Value) extends ExprNode
+class StructNode(name:String,
+                 t:TypeCode.Value,
+                 member:List[Slot])
+
+class LiteralNode(typeNode: TypeNode) extends ExprNode
+class IntegerLiteralNode(value:Long,t:TypeNode) extends LiteralNode(t)
+class StringLiteralNode(value:String,t:TypeNode) extends LiteralNode(t)
+class SizeofExprNode(exprNode: ExprNode,
+                     typeNode: TypeNode) extends ExprNode
+class AssignNode(lhs:ExprNode,
+                 rhs:ExprNode,
+                 op:String) extends ExprNode
+class FuncallNode(exprNode: ExprNode,
+                  args:List[ExprNode]) extends ExprNode
+class UnaryOpNode(op:String,
+                  exprNode: ExprNode,
+                  t:TypeCode.Value) extends ExprNode
+
+class Slot(typeNode: TypeNode,
+           name:String,
+           offset:Long) extends Node
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 case class Ast(translationUnit: TranslationUnit)
 
 case class TranslationUnit(externDeclaration: List[ExternDeclaration],
-                           eof: Token.Value) {
-  override def toString: String = s"TranslationUnit<$externDeclaration,$eof>"
+                      eof: Token.Value)  {
+  override def toString: String = s"\nTranslationUnit<$externDeclaration $eof>".replace("null", "")
 }
 
 
 case class ExternDeclaration(typeSpecifier: TypeSpecifier,
-                             semicolon: Token.Value,
-                             functionDefinition: List[FunctionDefinition],
-                             initDeclarator: List[InitDeclarator]) {
-  override def toString: String = s"\n\tExternDeclaration:$typeSpecifier,$semicolon,$functionDefinition,$initDeclarator"
+                        functionDefinition: List[FunctionDefinition],
+                        initDeclarator: List[InitDeclarator]) {
+  override def toString: String = s"\nExternDeclaration:$typeSpecifier $functionDefinition $initDeclarator".replace("null", "")
 
 }
 
-case class InitDeclarator(comma: Token.Value,
-                          declarator: Declarator,
-                          assign: AssignExpr) {
-  override def toString: String = s"\n\t\tInitDeclarator:$comma,$declarator,$assign"
+case class InitDeclarator(declarator: Declarator,
+                     assign: AssignExpr) {
+  override def toString: String = s"\nInitDeclarator:$declarator $assign".replace("null", "")
 }
 
 case class FunctionDefinition(declarator: Declarator,
-                              funcbody: Funcbody) {
-  override def toString: String = s"\n\t\tFunctionDefinition:$declarator,$funcbody"
+                         funcbody: Funcbody) {
+  override def toString: String = s"\nFunctionDefinition:$declarator $funcbody".replace("null", "")
 }
 
 case class Declaration(typeSpecifier: TypeSpecifier,
-                       initDeclaratorList: List[InitDeclaratorList],
-                       semicolon: Token.Value) {
-  override def toString: String = s"\n\t\tDeclaration:$typeSpecifier,$initDeclaratorList,$semicolon"
+                  initDeclaratorList: List[InitDeclaratorList]) {
+  override def toString: String = s"\nDeclaration:$typeSpecifier $initDeclaratorList".replace("null", "")
 }
 
 case class InitDeclaratorList(initDeclarator: InitDeclarator,
-                              initdecl: List[InitDecl]) {
-  override def toString: String = s"\n\t\tInitDeclaratorList:$initDeclarator,$initdecl"
-}
-
-case class InitDecl(comma: Token.Value,
-                    initDeclarator: InitDeclarator) {
-  override def toString: String = s"\n\t\tInitDecl:$comma,$initDeclarator"
+                         initdecl: List[InitDeclarator]) {
+  override def toString: String = s"\nInitDeclaratorList:$initDeclarator $initdecl".replace("null", "")
 }
 
 
 case class AssignExpr(assign: Token.Value,
-                      initializer: Initializer) {
-  override def toString: String = s"\n\t\t\tAssign:$assign,$initializer"
+                 initializer: Initializer) {
+  override def toString: String = s"\nAssign:$assign $initializer".replace("null", "")
 }
 
 case class TypeSpecifier(t: Token.Value, structSpecifier: StructSpecifier) {
-  override def toString: String = s"\n\t\tTypeSpecifier:$t,$structSpecifier"
+  override def toString: String = s"\nTypeSpecifier:$t $structSpecifier".replace("null", "")
 }
 
 case class StructSpecifier(kwStruct: Token.Value,
-                           identifier: Token.Value,
-                           structDecl: StructDecl*) {
-  override def toString: String = s"\n\t\tStructSpecifier:$kwStruct,$identifier,$structDecl"
+                      identifier: Token.Value,
+                      structDeclaration: List[StructDeclaration]) {
+  override def toString: String = s"\nStructSpecifier:$kwStruct $identifier $structDeclaration"
 }
-
-case class StructDecl(begin: Token.Value,
-                      structDeclaration: List[StructDeclaration],
-                      end: Token.Value) {
-  override def toString: String = s"\n\t\tStructDecl:$begin,$structDeclaration,$end"
-}
-
 
 case class StructDeclaration(typeSpecifier: TypeSpecifier,
-                             decl: List[Decl],
-                             semicolon: Token.Value) {
-  override def toString: String = s"\n\t\tStructDeclaration:$typeSpecifier,$decl,$semicolon"
+                        decl: List[Declarator]) {
+  override def toString: String = s"\nStructDeclaration:$typeSpecifier $decl".replace("null", "")
 }
 
 
-case class Decl(comma: Token.Value,
-                declarator: Declarator) {
-  override def toString: String = s"\n\t\tDecl:$comma,$declarator"
-}
+
 
 case class FunctionCallingConvention(token: Token.Value) {
-  override def toString: String = s"\n\t\t\t\tFunc:$token"
+  override def toString: String = s"\nFunc:$token".replace("null", "")
 }
 
 case class StructMemberAlignment(align: Token.Value,
-                                 openpa: Token.Value,
-                                 cint: Token.Value,
-                                 closepa: Token.Value) {
-  override def toString: String = s"\n\t\t\t\tStructMemberAlignment:$align,$openpa,$cint,$closepa"
+                            cint: Token.Value) {
+  override def toString: String = s"\nStructMemberAlignment:$align $cint".replace("null", "")
 }
 
 case class Declarator(pointer: Token.Value,
-                      functionCallingConvention: FunctionCallingConvention,
-                      structMemberAlignment: StructMemberAlignment,
-                      directDeclarator: DirectDeclarator) {
-  override def toString: String = s"\n\t\t\tDeclarator:$pointer,$functionCallingConvention,$structMemberAlignment,$directDeclarator"
+                 functionCallingConvention: FunctionCallingConvention,
+                 structMemberAlignment: StructMemberAlignment,
+                 directDeclarator: DirectDeclarator) {
+  override def toString: String = s"\nDeclarator:$pointer $functionCallingConvention $structMemberAlignment $directDeclarator".replace("null", "")
 }
 
 case class DirectDeclarator(identifier: Token.Value,
-                            directDeclaratorPostfix: DirectDeclaratorPostfix) {
-  override def toString: String = s"\n\t\t\t\tDirectDeclarator:$identifier,$directDeclaratorPostfix"
+                       directDeclaratorPostfix: DirectDeclaratorPostfix) {
+  override def toString: String = s"\nDirectDeclarator:$identifier $directDeclaratorPostfix".replace("null", "")
 }
 
-case class DirectDeclaratorPostfix(br: Br,
-                                   pa: Pa) {
-  override def toString: String = s"\n\t\t\t\t\tDirectDeclaratorPostfix:$br,$pa"
-}
-
-case class Br(openbr: Token.Value,
-              cint: Token.Value,
-              closebr: Token.Value) {
-  override def toString: String = s"$openbr,$cint,$closebr"
-}
-
-case class Pa(openpa: Token.Value,
-              parameterTypeList: ParameterTypeList,
-              closepa: Token.Value) {
-  override def toString: String = s"$openpa,$parameterTypeList,$closepa"
+case class DirectDeclaratorPostfix(cint: Token.Value,
+                              parameterTypeList: ParameterTypeList) {
+  override def toString: String = s"\nDirectDeclaratorPostfix:$cint $parameterTypeList".replace("null", "")
 }
 
 
 case class ParameterTypeList(parameterList: ParameterList,
-                             comma: Token.Value,
-                             ellipsis: Token.Value) {
-  override def toString: String = s"\n\t\tParameterTypeList:$parameterList,$comma,$ellipsis"
+                        comma: Token.Value,
+                        ellipsis: Token.Value) {
+  override def toString: String = s"\nParameterTypeList:$parameterList $comma $ellipsis".replace("null", "")
 }
 
 case class ParameterList(parameterDeclaration: ParameterDeclaration,
-                         parameterDecl: ParameterDecl*) {
-  override def toString: String = s"\n\t\tParameterList:$parameterDeclaration,$ParameterDeclaration"
+                    parameterDecl: ParameterDeclaration*) {
+  override def toString: String = s"\nParameterList:$parameterDeclaration".replace("null", "")
 }
 
-case class ParameterDecl(comma: Token.Value,
-                         parameterDeclaration: ParameterDeclaration) {
-  override def toString: String = s"$comma,$parameterDeclaration"
-}
 
 case class ParameterDeclaration(typeSpecifier: TypeSpecifier,
-                                declarator: Declarator) {
-  override def toString: String = s"$typeSpecifier,$declarator"
+                           declarator: Declarator) {
+  override def toString: String = s"$typeSpecifier $declarator".replace("null", "")
 }
 
 case class Funcbody(compoundStatement: CompoundStatement) {
-  override def toString: String = s"\n\t\tFuncbody:$compoundStatement"
+  override def toString: String = s"\nFuncbody:$compoundStatement".replace("null", "")
 }
 
 case class Initializer(assignmentExpression: AssignmentExpression) {
-  override def toString: String = s"\n\t\t\t\tInitializer:$assignmentExpression"
+  override def toString: String = s"\nInitializer:$assignmentExpression".replace("null", "")
 }
 
-case class CompoundStatement(begin: Token.Value,
-                             internDeclaration: List[ExternDeclaration],
-                             statement: List[Statement],
-                             end: Token.Value) {
-  override def toString: String = s"\n\t\tCompoundStatement:$begin,$internDeclaration,$statement,$end"
+case class CompoundStatement(internDeclaration: List[ExternDeclaration],
+                        statement: List[Statement]) {
+  override def toString: String = s"\nCompoundStatement:$internDeclaration $statement".replace("null", "")
 }
 
 case class Statement(compoundStatement: CompoundStatement,
-                     ifStatement: IfStatement,
-                     returnStatement: ReturnStatement,
-                     breakStatement: BreakStatement,
-                     continueStatement: ContinueStatement,
-                     forStatement: ForStatement,
-                     expressionStatement: ExpressionStatement) {
-  override def toString: String = s"\n\t\tStatement:$compoundStatement,$ifStatement,$returnStatement,$breakStatement,$continueStatement,$forStatement,$expressionStatement"
+                ifStatement: IfStatement,
+                returnStatement: ReturnStatement,
+                breakStatement: BreakStatement,
+                continueStatement: ContinueStatement,
+                forStatement: ForStatement,
+                expressionStatement: ExpressionStatement) {
+  override def toString: String = s"\nStatement:$compoundStatement $ifStatement $returnStatement $breakStatement $continueStatement $forStatement $expressionStatement".replace("null", "")
 }
 
 case class ExpressionStatement(expression: Expression,
-                               semicolon: Token.Value) {
-  override def toString: String = s"\n\t\tExpressionStatement:$expression,$semicolon"
+                          semicolon: Token.Value) {
+  override def toString: String = s"\nExpressionStatement:$expression $semicolon".replace("null", "")
 }
 
 case class IfStatement(iff: Token.Value,
-                       openpa: Token.Value,
-                       expression: Expression,
-                       closepa: Token.Value,
-                       statement: Statement,
-                       elsee: Token.Value,
-                       statements: Statement) {
-  override def toString: String = s"\n\t\tIfStatement:$iff,$openpa,$expression,$closepa,$statement,$elsee,$statements"
+                  expression: Expression,
+                  statement: Statement,
+                  elsee: Token.Value,
+                  statements: Statement) {
+  override def toString: String = s"\nIfStatement:$iff $expression $statement $elsee $statements".replace("null", "")
 }
 
 case class ForStatement(forr: Token.Value,
-                        openpa: Token.Value,
-                        expressionStatement1: ExpressionStatement,
-                        expressionStatement2: ExpressionStatement,
-                        expression: Expression,
-                        closepa: Token.Value,
-                        statement: Statement) {
-  override def toString: String = s"\n\t\tForStmt:$forr,$openpa,$expressionStatement1,$expressionStatement2,$expression,$closepa,$statement"
+                   expressionStatement1: ExpressionStatement,
+                   expressionStatement2: ExpressionStatement,
+                   expression: Expression,
+                   statement: Statement) {
+  override def toString: String = s"\nForStmt:$forr $expressionStatement1 $expressionStatement2 $expression $statement".replace("null", "")
 }
 
-case class ContinueStatement(continue: Token.Value,
-                             semicolon: Token.Value) {
-  override def toString: String = s"\n\t\tContinueStmt:$continue,$semicolon"
+case class ContinueStatement(continue: Token.Value) {
+  override def toString: String = s"\nContinueStmt:$continue".replace("null", "")
 }
 
-case class BreakStatement(break: Token.Value,
-                          semicolon: Token.Value) {
-  override def toString: String = s"\n\t\tBreakStmt:$break,$semicolon"
+case class BreakStatement(break: Token.Value) {
+  override def toString: String = s"\nBreakStmt:$break".replace("null", "")
 }
 
 case class ReturnStatement(returnn: Token.Value,
-                           expression: Expression,
-                           semicolon: Token.Value) {
-  override def toString: String = s"\n\t\tReturnStmt:$returnn,$expression,$semicolon"
+                      expression: Expression) {
+  override def toString: String = s"\nReturnStmt:$returnn $expression".replace("null", "")
 }
 
-case class Expression(assignmentExpression: AssignmentExpression,
-                      moreExpr: MoreArguement*) {
-  override def toString: String = s"\n\t\tExpr:$assignmentExpression,$moreExpr"
+case class Expression(assignmentExpression: List[AssignmentExpression]) {
+  override def toString: String = if (assignmentExpression.nonEmpty)
+    s"\nExpr:$assignmentExpression".replace("null", "")
+  else
+    ""
 }
 
 
 case class AssignmentExpression(equalityExpression: EqualityExpression,
-                                assign: Token.Value,
-                                assignmentExpression: AssignmentExpression) {
-  override def toString: String = s"\n\t\t\t\t\tAssignmentExpr:$equalityExpression,$assign,$assignmentExpression"
+                           assign: Token.Value,
+                           assignmentExpression: AssignmentExpression) {
+  override def toString: String = s"\nAssignmentExpr:$equalityExpression $assign $assignmentExpression".replace("null", "")
 }
 
 case class EqualityExpression(relationalExpression: RelationExpression,
-                              eq: Token.Value,
-                              relationalExpression1: RelationExpression) {
-  override def toString: String = s"\n\t\t\t\t\t\t\t\tEqualityExpr:$relationalExpression,$eq,$relationalExpression1"
+                         eq: Token.Value,
+                         relationalExpression1: RelationExpression) {
+  override def toString: String = s"\nEqualityExpr:$relationalExpression $eq $relationalExpression1".replace("null", "")
 }
 
 case class RelationExpression(additiveExpression: AdditiveExpression,
-                              token: Token.Value,
-                              additiveExpression1: AdditiveExpression) {
-  override def toString: String = s"\n\t\t\t\t\t\t\tRelationExpr:$additiveExpression,$token,$additiveExpression1"
+                         token: Token.Value,
+                         additiveExpression1: AdditiveExpression) {
+  override def toString: String = s"\nRelationExpr:$additiveExpression $token $additiveExpression1".replace("null", "")
 }
 
 case class AdditiveExpression(multplicativeExpression: MultplicativeExpression,
-                              token: Token.Value,
-                              multplicativeExpression1: MultplicativeExpression) {
-  override def toString: String = s"\n\t\t\t\t\t\t\t\tAdditiveExpr:$multplicativeExpression,$token,$multplicativeExpression1"
+                         token: Token.Value,
+                         multplicativeExpression1: MultplicativeExpression) {
+  override def toString: String = s"\nAdditiveExpr:$multplicativeExpression $token $multplicativeExpression1".replace("null", "")
 }
 
 case class MultplicativeExpression(unaryExpression: UnaryExpression,
-                                   token: Token.Value,
-                                   unaryExpression1: UnaryExpression) {
-  override def toString: String = s"\n\t\t\t\t\t\t\t\t\tMultplicativeExpr:$unaryExpression,$token,$unaryExpression"
+                              token: Token.Value,
+                              unaryExpression1: UnaryExpression) {
+  override def toString: String = s"\nMultplicativeExpr:$unaryExpression $token $unaryExpression".replace("null", "")
 }
 
 case class UnaryExpression(token: Token.Value,
-                           unaryExpression: UnaryExpression,
-                           postfixExpression: PostfixExpression,
-                           sizeofExpression: SizeofExpression) {
-  override def toString: String = s"\n\t\t\t\t\t\t\t\t\t\tUnaryExpr:$token,$unaryExpression,$postfixExpression,$sizeofExpression"
+                      unaryExpression: UnaryExpression,
+                      postfixExpression: PostfixExpression,
+                      sizeofExpression: SizeofExpression) {
+  override def toString: String = s"\nUnaryExpr:$token $unaryExpression $postfixExpression $sizeofExpression".replace("null", "")
 }
 
 case class SizeofExpression(sizeof: Token.Value,
-                            openpa: Token.Value,
-                            typeSpecifier: TypeSpecifier,
-                            closepa: Token.Value) {
-  override def toString: String = s"\n\t\tSizeOfExpr:$sizeof,$openpa,$typeSpecifier,$closepa"
+                       typeSpecifier: TypeSpecifier) {
+  override def toString: String = s"\nSizeOfExpr:$sizeof $typeSpecifier".replace("null", "")
 }
 
 case class PostfixExpression(primaryExpression: PrimaryExpression,
-                             brExpression: BrExpression,
-                             paExpression: PaArgueExpression,
-                             dotExpression: DotExpression,
-                             pointstoExpression: PointstoExpression) {
-  override def toString: String = s"\n\t\t\t\t\t\t\t\t\t\t\t\t\tPostfixExpr:$primaryExpression,$brExpression,$paExpression,$dotExpression,$pointstoExpression"
-}
-
-case class BrExpression(openbr: Token.Value,
                         expression: Expression,
-                        closebr: Token.Value) {
-  override def toString: String = s"$openbr,$expression,$closebr"
-}
-
-case class PaExpression(openpa: Token.Value,
-                        expression: Expression,
-                        closepa: Token.Value) {
-  override def toString: String = s"$openpa,$expression,$closepa"
-}
-
-case class PaArgueExpression(openpa: Token.Value,
-                             arguementExpressionList: ArguementExpressionList,
-                             closepa: Token.Value) {
-  override def toString: String = s"$openpa,$arguementExpressionList,$closepa"
+                        arguementExpressionList: ArguementExpressionList,
+                        dotExpression: DotExpression,
+                        pointstoExpression: PointstoExpression) {
+  override def toString: String = s"\nPostfixExpr:$primaryExpression $expression $arguementExpressionList $dotExpression $pointstoExpression".replace("null", "")
 }
 
 case class DotExpression(dot: Token.Value,
-                         identifier: Token.Value) {
-  override def toString: String = s"\n\t\tDotExpr:$dot,$identifier"
+                    identifier: Token.Value) {
+  override def toString: String = s"\nDotExpr:$dot $identifier".replace("null", "")
 }
 
 case class PointstoExpression(pointsto: Token.Value,
-                              identifier: Token.Value) {
-  override def toString: String = s"\n\t\tPointstoExpr:$pointsto,$identifier"
+                         identifier: Token.Value) {
+  override def toString: String = s"\nPointstoExpr:$pointsto $identifier".replace("null", "")
 }
 
-case class ArguementExpressionList(assignmentExpression: AssignmentExpression,
-                                   moreArguement: List[MoreArguement]) {
-  override def toString: String = s"\n\t\tArguementExpr:$assignmentExpression,$moreArguement"
+case class ArguementExpressionList(moreArguement: List[AssignmentExpression]) {
+  override def toString: String = s"\nArguementExpr:$moreArguement".replace("null", "")
 }
 
-case class MoreArguement(comma: Token.Value,
-                         assignmentExpression: AssignmentExpression) {
-  override def toString: String = s"$comma,$assignmentExpression"
-}
 
 case class PrimaryExpression(token: Token.Value,
-                             paExpression: PaExpression) {
-  override def toString: String = s"\n\t\t\t\t\t\t\t\t\t\t\t\tPrimaryExpr:$token,$paExpression"
+                        paExpression: Expression) {
+  override def toString: String = s"\nPrimaryExpr:$token $paExpression".replace("null", "")
 }
 
 
