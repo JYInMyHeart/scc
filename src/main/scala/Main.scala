@@ -2,7 +2,6 @@ import java.io.{File, PushbackInputStream}
 
 import Lexer.readSourceFile
 import Token._
-import Vistor._
 object Main {
   def main(args: Array[String]): Unit = {
     val fileName = "./src/main/scala/test.txt"
@@ -13,7 +12,7 @@ object Main {
     val t = Ast(TranslationUnit(p.translationUnit(),TK_EOF))
     println()
     println(s"lineCount= ${lexer.lineNum}")
-    visit(t)
+
 
   }
 
