@@ -1,7 +1,7 @@
 class Node
 class ExprNode extends Node
 class StmtNode extends Node
-class TypeNode extends Node
+class TypeNode(name:String) extends Node
 class ForNode(init:StmtNode,
               cond:ExprNode,
               incr:StmtNode,
@@ -10,7 +10,48 @@ class IfNode(cond:ExprNode,
              thenBody:StmtNode,
              elseBody:StmtNode) extends StmtNode
 class BreakNode extends StmtNode
-class Contu
+class ContinueNode extends StmtNode
+class ReturnNode extends StmtNode
+class BlockNode extends StmtNode
+class ExprStmtNode extends StmtNode
+class BinaryOpNode(op:String,
+                   left:ExprNode,
+                   right:ExprNode,
+                   t:TypeCode.Value) extends ExprNode
+class StructNode(name:String,
+                 t:TypeCode.Value,
+                 member:List[Slot])
+
+class LiteralNode(typeNode: TypeNode) extends ExprNode
+class IntegerLiteralNode(value:Long,t:TypeNode) extends LiteralNode(t)
+class StringLiteralNode(value:String,t:TypeNode) extends LiteralNode(t)
+class SizeofExprNode(exprNode: ExprNode,
+                     typeNode: TypeNode) extends ExprNode
+class AssignNode(lhs:ExprNode,
+                 rhs:ExprNode,
+                 op:String) extends ExprNode
+class FuncallNode(exprNode: ExprNode,
+                  args:List[ExprNode]) extends ExprNode
+class UnaryOpNode(op:String,
+                  exprNode: ExprNode,
+                  t:TypeCode.Value) extends ExprNode
+
+class Slot(typeNode: TypeNode,
+           name:String,
+           offset:Long) extends Node
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 case class Ast(translationUnit: TranslationUnit)
 
