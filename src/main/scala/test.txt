@@ -24,6 +24,7 @@ void main(){
     }
     int a = 2.34;//sb
     printf("hello,world");
+    int **a;
 }
 
 End_Of_File

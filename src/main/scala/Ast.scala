@@ -12,7 +12,7 @@ class IfNode(cond:ExprNode,
 class BreakNode extends StmtNode
 class ContinueNode extends StmtNode
 class ReturnNode extends StmtNode
-class BlockNode extends StmtNode
+class BlockNode() extends StmtNode
 class ExprStmtNode extends StmtNode
 class BinaryOpNode(op:String,
                    left:ExprNode,
@@ -39,6 +39,22 @@ class UnaryOpNode(op:String,
 class Slot(typeNode: TypeNode,
            name:String,
            offset:Long) extends Node
+
+class DefineVaribale extends
+
+class HomogeneousAst(token: Token.Value,
+                     var children:List[HomogeneousAst]){
+  def addChild(homogeneousAst: HomogeneousAst) = children +:= homogeneousAst
+  def isNil = token == null
+
+  def toStringTree(c:List[HomogeneousAst]): String = {
+    c match {
+      case Nil => this.toString
+      case x::xs =>
+        x.toString + toStringTree(xs)
+    }
+  }
+}
 
 
 
