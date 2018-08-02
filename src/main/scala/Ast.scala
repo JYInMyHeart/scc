@@ -2,68 +2,73 @@ class Node
 class ExprNode extends Node
 class StmtNode extends Node
 class TypeNode(name:String) extends Node
-class ForNode(init:StmtNode,
-              cond:ExprNode,
-              incr:StmtNode,
-              body:StmtNode) extends StmtNode
-class IfNode(cond:ExprNode,
-             thenBody:StmtNode,
-             elseBody:StmtNode) extends StmtNode
+class ForNode(var init:StmtNode,
+              var cond:ExprNode,
+              var incr:StmtNode,
+              var body:StmtNode) extends StmtNode
+class IfNode(var cond:ExprNode,
+             var thenBody:StmtNode,
+             var elseBody:StmtNode) extends StmtNode
 class BreakNode extends StmtNode
 class ContinueNode extends StmtNode
 class ReturnNode extends StmtNode
-class BlockNode(varaiables:List[DefineVaribale],
-                stmts:List[StmtNode],
-                scope:LocalScope) extends StmtNode
+class BlockNode(var varaiables:List[DefineVaribale],
+                var stmts:List[StmtNode],
+                var scope:LocalScope) extends StmtNode
 class ExprStmtNode extends StmtNode
-class BinaryOpNode(op:String,
-                   left:ExprNode,
-                   right:ExprNode,
-                   t:TypeCode.Value) extends ExprNode
-class StructNode(name:String,
-                 typeNode: TypeNode,
-                 member:List[Slot]) extends TypeDefinition(name,typeNode)
+class BinaryOpNode(var op:String,
+                   var left:ExprNode,
+                   var right:ExprNode,
+                   var t:TypeCode.Value) extends ExprNode
+class StructNode(var name:String,
+                 var typeNode: TypeNode,
+                 var member:List[Slot]) extends TypeDefinition(name,typeNode)
 
-class LiteralNode(typeNode: TypeNode) extends ExprNode
-class IntegerLiteralNode(value:Long,t:TypeNode) extends LiteralNode(t)
-class StringLiteralNode(value:String,t:TypeNode) extends LiteralNode(t)
-class SizeofExprNode(exprNode: ExprNode,
-                     typeNode: TypeNode) extends ExprNode
-class AssignNode(lhs:ExprNode,
-                 rhs:ExprNode,
-                 op:String) extends ExprNode
-class FuncallNode(exprNode: ExprNode,
-                  args:List[ExprNode]) extends ExprNode
-class UnaryOpNode(op:String,
-                  exprNode: ExprNode,
-                  t:TypeCode.Value) extends ExprNode
+class LiteralNode(var typeNode: TypeNode) extends ExprNode
+class IntegerLiteralNode(var value:Long,t:TypeNode) extends LiteralNode(t)
+class StringLiteralNode(var value:String,t:TypeNode) extends LiteralNode(t)
+class SizeofExprNode(var exprNode: ExprNode,
+                     var typeNode: TypeNode) extends ExprNode
+class AssignNode(var lhs:ExprNode,
+                 var rhs:ExprNode,
+                 var op:String) extends ExprNode
+class FuncallNode(var exprNode: ExprNode,
+                  var args:List[ExprNode]) extends ExprNode
+class UnaryOpNode(var op:String,
+                  var exprNode: ExprNode,
+                  var t:TypeCode.Value) extends ExprNode
 
-class Slot(typeNode: TypeNode,
-           name:String,
-           offset:Long) extends Node
+class Slot(var typeNode: TypeNode,
+           var name:String,
+           var offset:Long) extends Node
 
 class PtrMemberNode() extends ExprNode
 
 
 
-class Scope(children:List[LocalScope])
-class LocalScope(parent:Scope,
-                 varaiables:Map[String,DefineVaribale],
-                 children:List[LocalScope]) extends Scope(children)
-class TypeDefinition(name:String,
-                     typeNode: TypeNode) extends Node
-class TypedefNode(real:TypeNode,
-                  name:String,
-                  typeNode: TypeNode) extends TypeDefinition(name,typeNode)
+class Scope(var children:List[LocalScope])
+class LocalScope(var parent:Scope,
+                 var varaiables:Map[String,DefineVaribale],
+                 var children:List[LocalScope]) extends Scope(children)
 
-class MyAST()
-class Declarations(defvars:Set[DefineVaribale],
-                   vardecls:Set[UndefinedVariable],
-                   defuns:Set[DefinedFunction],
-                   funcdecls:Set[UndefinedFunction],
-                   constants:Set[Constant],
-                   defstructs:Set[StructNode],
-                   typedefs:Set[TypedefNode])
+class TopScope(var staticLocalVariables:List[DefineVaribale],
+               var entities:Map[String,Entity],
+               var children:List[LocalScope]) extends Scope(children)
+class TypeDefinition(var name:String,
+                     var typeNode: TypeNode) extends Node
+class TypedefNode(var real:TypeNode,
+                  var name:String,
+                  var typeNode: TypeNode) extends TypeDefinition(name,typeNode)
+
+class MyAST(var declarations: Declarations,
+            var scope: TopScope) extends Node
+class Declarations(var defvars:Set[DefineVaribale],
+                   var vardecls:Set[UndefinedVariable],
+                   var defuns:Set[DefinedFunction],
+                   var funcdecls:Set[UndefinedFunction],
+                   var constants:Set[Constant],
+                   var defstructs:Set[StructNode],
+                   var typedefs:Set[TypedefNode])
 
 
 
@@ -89,15 +94,38 @@ class UndefinedFunction(name:String,
                         isPrivate:Boolean,
                         typeNode: TypeNode,
                         params:Params) extends Function(name,isPrivate,typeNode)
+class DefinedFunction(name:String,
+                      isPrivate:Boolean,
+                      typeNode: TypeNode,
+                      params:Params,
+                      body:BlockNode,
+                      scope:LocalScope) extends Function(name,isPrivate,typeNode)
 
-
-class DefineVaribale extends Variable()
-
+class DefineVaribale(init:ExprNode,
+                     sequence:Long,
+                     name:String,
+                     isPrivate:Boolean,
+                     typeNode: TypeNode) extends Variable(name,isPrivate,typeNode)
+class UndefinedVariable(name:String,
+                        isPrivate:Boolean,
+                        typeNode: TypeNode) extends Variable(name,isPrivate,typeNode)
 
 class Variable(name:String,
                isPrivate:Boolean,
                typeNode: TypeNode) extends Entity(name,isPrivate,typeNode)
 
+
+class Parameter(init:ExprNode,
+                sequence:Long,
+                name:String,
+                isPrivate:Boolean,
+                typeNode: TypeNode) extends DefineVaribale(init, sequence, name, isPrivate, typeNode)
+
+class ParamSlots[A](paramDescriptors:List[A],
+                    vararg:Boolean)
+
+class Params(paramDescriptors:List[Parameter],
+             vararg:Boolean) extends ParamSlots[Parameter](paramDescriptors, vararg)
 //class HomogeneousAst(token: Token.Value,
 //                     var children:List[HomogeneousAst]){
 //  def addChild(homogeneousAst: HomogeneousAst) = children +:= homogeneousAst

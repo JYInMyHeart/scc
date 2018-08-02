@@ -333,14 +333,6 @@ class Parser(var syntaxState: SynTaxState,
 
   def externalDeclaration(l: StoreClass.Value): ExternDeclaration = {
     val typeSpecifiers = typeSpecifier()
-//    val typeCode = getTypeCode(typeSpecifiers)
-//    if (l == SC_GLOBAL) {
-//      globalSope.env.push(Symbol(Lexer.tkWords.head._3, null, typeCode, lexer.lineNum, null))
-//    } else {
-//      var scope = Scope(Stack[Symbol](),List())
-//      scope.env.push(Symbol(Lexer.tkWords.head._3, globalSope, typeCode, lexer.lineNum, null))
-//      globalSope.scopes :+= scope
-//    }
     var declarators: List[Declarator] = List()
     var semicolon: Token.Value = null
     var comma: Token.Value = null
@@ -475,7 +467,7 @@ class Parser(var syntaxState: SynTaxState,
     TypeSpecifier(t,structSpecifiers)
   }
 
-  def translationUnit() = {
+  def translationUnit(ast:MyAST) = {
     var list: List[ExternDeclaration] = List()
     while (lexer.token != TK_EOF) {
       val externDeclaration = externalDeclaration(SC_GLOBAL)
