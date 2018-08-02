@@ -20,9 +20,9 @@ class BinaryOpNode(var op:String,
                    var left:ExprNode,
                    var right:ExprNode,
                    var t:TypeCode.Value) extends ExprNode
-class StructNode(var name:String,
-                 var typeNode: TypeNode,
-                 var member:List[Slot]) extends TypeDefinition(name,typeNode)
+class StructNode(var name1:String,
+                 var typeNode1: TypeNode,
+                 var member:List[Slot]) extends TypeDefinition(name1,typeNode1)
 
 class LiteralNode(var typeNode: TypeNode) extends ExprNode
 class IntegerLiteralNode(var value:Long,t:TypeNode) extends LiteralNode(t)
@@ -49,16 +49,16 @@ class PtrMemberNode() extends ExprNode
 class Scope(var children:List[LocalScope])
 class LocalScope(var parent:Scope,
                  var varaiables:Map[String,DefineVaribale],
-                 var children:List[LocalScope]) extends Scope(children)
+                 var children1:List[LocalScope]) extends Scope(children1)
 
 class TopScope(var staticLocalVariables:List[DefineVaribale],
                var entities:Map[String,Entity],
-               var children:List[LocalScope]) extends Scope(children)
+               var children1:List[LocalScope]) extends Scope(children1)
 class TypeDefinition(var name:String,
                      var typeNode: TypeNode) extends Node
 class TypedefNode(var real:TypeNode,
-                  var name:String,
-                  var typeNode: TypeNode) extends TypeDefinition(name,typeNode)
+                  var name1:String,
+                  var typeNode1: TypeNode) extends TypeDefinition(name1,typeNode1)
 
 class MyAST(var declarations: Declarations,
             var scope: TopScope) extends Node
