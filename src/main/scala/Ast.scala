@@ -12,15 +12,17 @@ class IfNode(cond:ExprNode,
 class BreakNode extends StmtNode
 class ContinueNode extends StmtNode
 class ReturnNode extends StmtNode
-class BlockNode() extends StmtNode
+class BlockNode(varaiables:List[DefineVaribale],
+                stmts:List[StmtNode],
+                scope:LocalScope) extends StmtNode
 class ExprStmtNode extends StmtNode
 class BinaryOpNode(op:String,
                    left:ExprNode,
                    right:ExprNode,
                    t:TypeCode.Value) extends ExprNode
 class StructNode(name:String,
-                 t:TypeCode.Value,
-                 member:List[Slot])
+                 typeNode: TypeNode,
+                 member:List[Slot]) extends TypeDefinition(name,typeNode)
 
 class LiteralNode(typeNode: TypeNode) extends ExprNode
 class IntegerLiteralNode(value:Long,t:TypeNode) extends LiteralNode(t)
@@ -40,21 +42,75 @@ class Slot(typeNode: TypeNode,
            name:String,
            offset:Long) extends Node
 
-class DefineVaribale extends
+class PtrMemberNode() extends ExprNode
 
-class HomogeneousAst(token: Token.Value,
-                     var children:List[HomogeneousAst]){
-  def addChild(homogeneousAst: HomogeneousAst) = children +:= homogeneousAst
-  def isNil = token == null
 
-  def toStringTree(c:List[HomogeneousAst]): String = {
-    c match {
-      case Nil => this.toString
-      case x::xs =>
-        x.toString + toStringTree(xs)
-    }
-  }
-}
+
+class Scope(children:List[LocalScope])
+class LocalScope(parent:Scope,
+                 varaiables:Map[String,DefineVaribale],
+                 children:List[LocalScope]) extends Scope(children)
+class TypeDefinition(name:String,
+                     typeNode: TypeNode) extends Node
+class TypedefNode(real:TypeNode,
+                  name:String,
+                  typeNode: TypeNode) extends TypeDefinition(name,typeNode)
+
+class MyAST()
+class Declarations(defvars:Set[DefineVaribale],
+                   vardecls:Set[UndefinedVariable],
+                   defuns:Set[DefinedFunction],
+                   funcdecls:Set[UndefinedFunction],
+                   constants:Set[Constant],
+                   defstructs:Set[StructNode],
+                   typedefs:Set[TypedefNode])
+
+
+
+
+
+
+
+
+
+
+class Entity(name:String,
+             isPrivate:Boolean,
+             typeNode: TypeNode)
+class Constant(name:String,
+               isPrivate:Boolean,
+               typeNode: TypeNode,
+               value:ExprNode) extends Entity(name,isPrivate,typeNode)
+class Function(name:String,
+               isPrivate:Boolean,
+               typeNode: TypeNode) extends Entity(name,isPrivate,typeNode)
+
+class UndefinedFunction(name:String,
+                        isPrivate:Boolean,
+                        typeNode: TypeNode,
+                        params:Params) extends Function(name,isPrivate,typeNode)
+
+
+class DefineVaribale extends Variable()
+
+
+class Variable(name:String,
+               isPrivate:Boolean,
+               typeNode: TypeNode) extends Entity(name,isPrivate,typeNode)
+
+//class HomogeneousAst(token: Token.Value,
+//                     var children:List[HomogeneousAst]){
+//  def addChild(homogeneousAst: HomogeneousAst) = children +:= homogeneousAst
+//  def isNil = token == null
+//
+//  def toStringTree(c:List[HomogeneousAst]): String = {
+//    c match {
+//      case Nil => this.toString
+//      case x::xs =>
+//        x.toString + toStringTree(xs)
+//    }
+//  }
+//}
 
 
 
