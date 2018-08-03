@@ -1,3 +1,4 @@
+
 class Node
 class ExprNode extends Node
 class StmtNode extends Node
@@ -53,7 +54,7 @@ class LocalScope(var parent:Scope,
 
 class TopScope(var staticLocalVariables:List[DefineVaribale],
                var entities:Map[String,Entity],
-               var children1:List[LocalScope]) extends Scope(children1)
+               var children2:List[LocalScope]) extends Scope(children2)
 class TypeDefinition(var name:String,
                      var typeNode: TypeNode) extends Node
 class TypedefNode(var real:TypeNode,

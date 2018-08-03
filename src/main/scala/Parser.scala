@@ -3,11 +3,10 @@ import StoreClass._
 import SynTax.SynTaxState._
 import Token._
 
-import scala.collection.mutable.Stack
-
 class Parser(var syntaxState: SynTaxState,
              var syntaxLevel: Int,
-             val lexer: Lexer) {
+             val lexer: Lexer,
+             var ast:MyAST) {
 
 
   implicit val p = this
@@ -339,6 +338,7 @@ class Parser(var syntaxState: SynTaxState,
     var assign: Token.Value = null
     var funcbodys: List[Funcbody] = List()
     var initializers: List[Initializer] = List()
+    val typeNode = new TypeNode(typeSpecifiers.t.toString)
     lexer.token match {
       case TK_SEMICOLON =>
         syntaxState = SNTX_LF_HT
@@ -374,6 +374,9 @@ class Parser(var syntaxState: SynTaxState,
           }
         }
     }
+
+//    declarators.head.directDeclarator.identifier
+//    ast.declarations.typedefs += new TypedefNode(new TypeNode(typeSpecifiers.t.toString),)
     val assignExprs = for (i <- initializers.drop(0); d <- declarators.drop(0))
       yield InitDeclarator(d, AssignExpr(assign, i))
     var idhead: InitDeclarator = null
@@ -467,7 +470,7 @@ class Parser(var syntaxState: SynTaxState,
     TypeSpecifier(t,structSpecifiers)
   }
 
-  def translationUnit(ast:MyAST) = {
+  def translationUnit() = {
     var list: List[ExternDeclaration] = List()
     while (lexer.token != TK_EOF) {
       val externDeclaration = externalDeclaration(SC_GLOBAL)
@@ -673,11 +676,6 @@ class Parser(var syntaxState: SynTaxState,
     }
     Statement(cs,is,rs,bs,cos,fs,es)
   }
-}
-
-object Parser {
-  var globalSope: Scope = Scope(Stack(),List())
-
 }
 
 

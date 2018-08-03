@@ -1,4 +1,4 @@
-import scala.collection.mutable
+
 
 class SccTypes
 case class Symbol(var name:String,
@@ -8,8 +8,6 @@ case class Symbol(var name:String,
                   var next:Symbol){
   override def toString: String = s"<$name $t $loc $next>"
 }
-case class Scope(var env:mutable.Stack[Symbol],
-                 var scopes:List[Scope])
 
 object TypeCode extends Enumeration{
   val T_INT = Value(0)
