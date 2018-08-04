@@ -1,7 +1,8 @@
-import java.io.{File, PushbackInputStream}
+import java.io.{ByteArrayInputStream, File, PushbackInputStream}
 
 import Lexer.readSourceFile
 import Token._
+
 object Main {
   def main(args: Array[String]): Unit = {
     val fileName = "./src/main/scala/test.txt"
@@ -20,13 +21,13 @@ object Main {
     )
     var scope = new TopScope(
       List[DefineVaribale](),
-      Map[String,Entity](),
+      Map[String, Entity](),
       List[LocalScope]()
     )
-    val ast = new MyAST(declarations,scope)
-    implicit val p = new Parser(SynTax.SynTaxState.SNTX_NULL,0,lexer,ast)
+    val ast = new MyAST(declarations, scope)
+    implicit val p = new Parser(SynTax.SynTaxState.SNTX_NULL, 0, lexer, ast)
     lexer.getToken()
-    val t = Ast(TranslationUnit(p.translationUnit(),TK_EOF))
+    p.translationUnit()
     println()
     println(s"lineCount= ${lexer.lineNum}")
 
@@ -34,3 +35,5 @@ object Main {
   }
 
 }
+
+

@@ -1,10 +1,20 @@
+
 struct point{
     int x;
     int y;
 };
+int f1(int y){return y + y;}
+
+int f(int x),f();
+int a,b,c;
+int a[4],b[7];
+int c[5];
+
+
 void main(){
     int arr[10];
     int i;
+    c[2] = 1;
     struct point pt;
     pt.x = 1024;
     pt.y = 1248;
@@ -15,10 +25,11 @@ void main(){
         }else{
             printf("arr[%d]\n",arr[i]);
         }
-
+//abc
     }
-    int a = 2.34;
+    int a = 2.34;//sb
     printf("hello,world");
+    int **a;
 }
 
 End_Of_File

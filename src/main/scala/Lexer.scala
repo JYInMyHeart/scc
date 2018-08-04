@@ -81,6 +81,10 @@ class Lexer(var token: Token,
     str
   }
 
+  def unGetToken(): Unit ={
+    Lexer.tkWords.head
+  }
+
   def getToken()(implicit parser:Parser): Unit = {
     preprocess()
     ch match {

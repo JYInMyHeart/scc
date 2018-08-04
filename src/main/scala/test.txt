@@ -1,12 +1,5 @@
 
-struct point{
-    int x;
-    int y;
-};
-int f1(int y){return y % y;}
 
-int f(int x),f();
-int a,b,c;
 int a[4],b[7];
 int c[5];
 
