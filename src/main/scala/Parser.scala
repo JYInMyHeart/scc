@@ -261,7 +261,7 @@ class Parser(var syntaxState: SynTaxState,
   //    }
   //  }
 
-  def externalDeclaration(l: StoreClass.Value,block:BlockNode): Unit = {
+  def externalDeclaration(l: StoreClass.Value): Unit = {
     val typeSpecifiers = typeSpecifier()
     var typeNode:TypeNode = null
     var localScope:LocalScope = null
@@ -288,6 +288,14 @@ class Parser(var syntaxState: SynTaxState,
            }
           getIdentType(t)
 
+          if(l == SC_GLOBAL){
+            ast.declarations.typedefs += new TypedefNode(typeNode,ident,typeNode)
+            ast.scope.entities += ident -> new Entity(ident,false,typeNode)
+          }else{
+            ast.scope.children.head.varaiables +=
+              ident -> new DefineVaribale(null,0,ident,true,typeNode)
+          }
+
           lexer.token match {
             case TK_BEGIN => {
               if (l == SC_LOCAL)
@@ -296,7 +304,7 @@ class Parser(var syntaxState: SynTaxState,
               ast.scope.children +:= localScope
               val blockNode: BlockNode = new BlockNode(List[DefineVaribale](),List[StmtNode](),localScope)
               ast.declarations.defuns += new DefinedFunction(ident,true,typeNode,null,blockNode)
-              funcBody(blockNode)
+              funcBody()
               flag = false
             }
             case _ => {
@@ -316,13 +324,13 @@ class Parser(var syntaxState: SynTaxState,
           }
         }
     }
-    ast.declarations.typedefs += new TypedefNode(typeNode,ident,typeNode)
-    if(l == SC_GLOBAL)
-      ast.scope.entities += ident -> new Entity(ident,false,typeNode)
-    else{
-      ast.scope.children.head.varaiables +=
-        ident -> new DefineVaribale(null,0,ident,true,typeNode)
-    }
+//    ast.declarations.typedefs += new TypedefNode(typeNode,ident,typeNode)
+//    if(l == SC_GLOBAL)
+//      ast.scope.entities += ident -> new Entity(ident,false,typeNode)
+//    else{
+//      ast.scope.children.head.varaiables +=
+//        ident -> new DefineVaribale(null,0,ident,true,typeNode)
+//    }
   }
 
   def structDeclaration() = {
@@ -533,7 +541,7 @@ class Parser(var syntaxState: SynTaxState,
     lexer.getToken()
   }
 
-  def funcBody(b:BlockNode) = {
+  def funcBody() = {
     compoundStatement()
   }
 
