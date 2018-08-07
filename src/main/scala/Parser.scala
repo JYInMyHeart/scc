@@ -89,7 +89,7 @@ class Parser(var syntaxState: SynTaxState,
     directDeclaratorPostfix()
   }
 
-  def declarator() = {
+  def declarator(): (String, TypeCode.Value) = {
     var star: String = ""
     while (lexer.token == TK_STAR) {
       star += keyWords(TK_STAR)
@@ -261,12 +261,23 @@ class Parser(var syntaxState: SynTaxState,
   //    }
   //  }
 
-  def externalDeclaration(l: StoreClass.Value): Unit = {
+  def getTypeNode(res:(String, TypeCode.Value),typeSpecifiers:Token.Value) = {
+    def getIdentType(t:TypeCode.Value) = t match {
+      case TypeCode.T_VOID =>
+        new TypeNode(keyWords(typeSpecifiers))
+      case TypeCode.T_ARRAY =>
+         new TypeNode(keyWords(typeSpecifiers) + "[]")
+      case _ =>
+        new TypeNode(keyWords(typeSpecifiers))
+    }
+    getIdentType(res._2)
+  }
+  def externalDeclaration(l: StoreClass.Value): List[DefineVaribale] = {
     val typeSpecifiers = typeSpecifier()
     var typeNode:TypeNode = null
     var localScope:LocalScope = null
     var ident:String = ""
-    var t:TypeCode.Value = null
+    var defvars = List[DefineVaribale]()
     lexer.token match {
       case TK_SEMICOLON =>
         syntaxState = SNTX_LF_HT
@@ -276,17 +287,8 @@ class Parser(var syntaxState: SynTaxState,
         while (flag) {
           val res = declarator()
           ident = res._1
-          t = res._2
 
-           def getIdentType(t:TypeCode.Value) = t match {
-             case TypeCode.T_VOID =>
-               typeNode =  new TypeNode(keyWords(typeSpecifiers))
-             case TypeCode.T_ARRAY =>
-               typeNode =  new TypeNode(keyWords(typeSpecifiers) + "[]")
-             case _ =>
-               typeNode =  new TypeNode(keyWords(typeSpecifiers))
-           }
-          getIdentType(t)
+          typeNode = getTypeNode(res,typeSpecifiers)
 
           if(l == SC_GLOBAL){
             ast.declarations.typedefs += new TypedefNode(typeNode,ident,typeNode)
@@ -302,7 +304,7 @@ class Parser(var syntaxState: SynTaxState,
                 error("unsupported internal declaration", lexer)
               localScope = new LocalScope(ast.scope,Map[String,DefineVaribale](),List[LocalScope]())
               ast.scope.children +:= localScope
-              val blockNode: BlockNode = new BlockNode(List[DefineVaribale](),List[StmtNode](),localScope)
+              val blockNode: BlockNode = new BlockNode(List[DefineVaribale](),List[StmtNode](),null)
               ast.declarations.defuns += new DefinedFunction(ident,true,typeNode,null,blockNode)
               funcBody()
               flag = false
@@ -331,6 +333,7 @@ class Parser(var syntaxState: SynTaxState,
 //      ast.scope.children.head.varaiables +=
 //        ident -> new DefineVaribale(null,0,ident,true,typeNode)
 //    }
+    defvars
   }
 
   def structDeclaration() = {
@@ -529,12 +532,13 @@ class Parser(var syntaxState: SynTaxState,
     syntaxState = SNTX_LF_HT
     syntaxLevel += 1
     lexer.getToken()
-
+    var defvars = List[DefineVaribale]()
+    var stmts = List[StmtNode]()
     while (lexer.token != TK_END) {
       if (isTypeSpecifier(lexer.token))
-        externalDeclaration(SC_LOCAL)
+        defvars ++= externalDeclaration(SC_LOCAL)
       else
-        statement()
+        stmts :+= statement()
     }
 
     syntaxState = SNTX_LF_HT
